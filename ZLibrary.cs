@@ -116,8 +116,30 @@ namespace ZLibrary
             }
 
             System.Random ran = new System.Random();
-            return (TypesSphere)ran.Next(0, 5);
+            return (TypesSphere)ran.Next(min, max);
         }
 
+    }
+
+    static public class BallController
+    {
+        static private List<List<GameObject>> ballsLists = new List<List<GameObject>>();      //списки з шарами всіх створених респавнів
+        static private List<GameObject> test;
+
+        static public void setBallList(List<GameObject> balls)
+        {
+            ballsLists.Add(balls);
+        }
+
+        static public int BallsListIndex
+        {
+            get
+            {
+                if (ballsLists == null)
+                    return 0;
+                else
+                    return ballsLists.Count;
+            }
+        }
     }
 }

@@ -5,14 +5,15 @@ using ZLibrary;
 
 public class SphereRespawn : MonoBehaviour
 {
+    BallCreator ballCreator = new BallCreator();
+
     //поля що встановлюються в редакторі
-    public List<Transform> pathPoints;      // Точки руху для шару що генерує даний респавн
+    public List<Transform> pathPoints;      //Точки руху для шару що генерує даний респавн
     public List<GameObject> balls;          //Лист шарів для цього потоку(з цього респавна)
     public Transform ballTransform;         // Шар, який буде створено
     private int ballID;                     // ID шара
-    private SphereBehaviour frontBall;      // передній шар
-    public int respID;                    // ID респавна     
-    public int countOfBalls;                 // кількість шарів з респавна
+    private BallBehavior frontBall;         // передній шар
+    public int countOfBalls;                // кількість шарів з респавна
 
     //швидкість
     public float speed;
@@ -23,8 +24,6 @@ public class SphereRespawn : MonoBehaviour
         set { speed = value; }
     }
 
-    BallCreator ballControl = new BallCreator();
-    
     [SerializeField]
     public int CountOfBalls
     {
@@ -32,10 +31,14 @@ public class SphereRespawn : MonoBehaviour
         set { countOfBalls = value; }
     }
 
+    public int RespIndex { get; set; }                   // Індекс респавна в листі
+
     // Start is called before the first frame update
     void Start()
     {
-        SetBallMembers(ballControl.getBall(ballTransform, transform.position, TypesSphere.EMPTY).gameObject); // перша сфера
+        RespIndex = BallController.BallsListIndex;
+
+        SetBallMembers(ballCreator.getBall(ballTransform, transform.position, TypesSphere.EMPTY).gameObject); // перша сфера
     }
 
     //Генерує сферу, якщо попередня виходить за межі колайдера спавна (респавн повинен мати статичний колайдер!)
@@ -44,15 +47,16 @@ public class SphereRespawn : MonoBehaviour
         if (countOfBalls <= ballID)
             return;
 
-        SetBallMembers(ballControl.getBall(ballTransform, transform.position).gameObject);
+        SetBallMembers(ballCreator.getBall(ballTransform, transform.position).gameObject);
     }
     void SetBallMembers(GameObject ball)
     {
         //Передача параметрів шару
-        SphereBehaviour sb = ball.GetComponent<SphereBehaviour>();
+        BallBehavior sb = ball.GetComponent<BallBehavior>();
         sb.Move(pathPoints, false);                                 //шлях, по якому рухатись
         sb.ID = ballID;
         sb.Speed = Speed;
+        sb.RespIndex = RespIndex;
 
         if (frontBall != null)
         {
@@ -66,6 +70,7 @@ public class SphereRespawn : MonoBehaviour
         ballID++;
 
         balls.Add(ball);
+        BallController.setBallList(balls);
     }
     
     //гізмо

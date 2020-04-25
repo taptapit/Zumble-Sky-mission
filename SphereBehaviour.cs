@@ -14,10 +14,10 @@ public class SphereBehaviour : MonoBehaviour, IBall
 
     public List<Transform> pathPoints;                              //точки маршруту
     //public List<Transform> oldPathPoints;                         //пройдені точки. Використовуються для реверса
-    private int destPointIndex;                                     //індекс поточної точки, до якої здійснювати рух
+    internal int destPointIndex;                                     //індекс поточної точки, до якої здійснювати рух
     private bool isRun;                                             //Чи почато рух(також для завдання руху та зупинки)
     private int movDirection=1;                                     //Напрямок руху   
-    bool isDirection;                                               //тип руху
+    internal bool isDirection;                                               //тип руху
    // private IEnumerator<Transform> point;
 
     //швидкість
@@ -81,17 +81,7 @@ public class SphereBehaviour : MonoBehaviour, IBall
         isRun = false;
     }
 
-    void OnTriggerEnter2D(Collider2D coll)
-    {
-        if (!isDirection || coll.gameObject.tag != "ball")
-            return;
 
-        SphereBehaviour collSb = coll.GetComponent<SphereBehaviour>();
-        gameObject.tag = "ball";
-        isDirection = false;
-        destPointIndex = collSb.destPointIndex;
-        Move(collSb.pathPoints, false);
-    }
 
     // if
 

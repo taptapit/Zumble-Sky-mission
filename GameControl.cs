@@ -22,13 +22,17 @@ public class GameControl : MonoBehaviour
 
     private void Start()
     {
-        respawns = GetComponents<SphereRespawn>();
+        //Встановити індекси в 
+     /*   respawns = GetComponents<SphereRespawn>();
+        for (int i = 0; i < respawns.Length; i++)
+        {
+            respawns[i].RespIndex = i;
+            BallController.setBallList(respawns[i].balls);
+        }*/
     }
 
     void OnMouseDown()
     {
-        Debug.Log($"MousePosZ={Input.mousePosition.z}");
-
         if (newSphere != null)
         {
             return;
