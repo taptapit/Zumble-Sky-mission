@@ -45,12 +45,12 @@ public class SphereBehaviour : MonoBehaviour, IBall
 
     //Поточний вектор призначення
     Vector3 destVector()        
-     {
+    {
          if (pathPoints[destPointIndex].position == transform.position && destPointIndex < pathPoints.Count-1)
              destPointIndex++;
 
          return pathPoints[destPointIndex].position;
-     }
+    }
 
     //наказ рухатись по напрямку 
     public void Move(Transform direction)
@@ -80,7 +80,6 @@ public class SphereBehaviour : MonoBehaviour, IBall
     {
         isRun = false;
     }
-
 
 
     // if

@@ -45,7 +45,7 @@ public class GameControl : MonoBehaviour
         }
 
         moveTo.position = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y,10));
-        newSphere = ballControl.getBall(ballTransform, transform.position, TypesSphere.RED).gameObject;
+        newSphere = ballControl.getBall(ballTransform, transform.position).gameObject;
         //newSphere.tag = "player";
         SphereBehaviour sb  =  newSphere.GetComponent<SphereBehaviour>();
         sb.Speed = Speed;

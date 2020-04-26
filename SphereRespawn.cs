@@ -11,7 +11,7 @@ public class SphereRespawn : MonoBehaviour
     public List<Transform> pathPoints;      //Точки руху для шару що генерує даний респавн
     public List<GameObject> balls;          //Лист шарів для цього потоку(з цього респавна)
     public Transform ballTransform;         // Шар, який буде створено
-    private int ballID;                     // ID шара
+    private int ballCount;                   // ID шара
     private BallBehavior frontBall;         // передній шар
     public int countOfBalls;                // кількість шарів з респавна
 
@@ -37,14 +37,13 @@ public class SphereRespawn : MonoBehaviour
     void Start()
     {
         RespIndex = BallController.BallsListIndex;
-
         SetBallMembers(ballCreator.getBall(ballTransform, transform.position, TypesSphere.EMPTY).gameObject); // перша сфера
     }
 
     //Генерує сферу, якщо попередня виходить за межі колайдера спавна (респавн повинен мати статичний колайдер!)
     void OnTriggerExit2D(Collider2D previos)
     {
-        if (countOfBalls <= ballID)
+        if (countOfBalls <= ballCount || previos.tag!="ball")
             return;
 
         SetBallMembers(ballCreator.getBall(ballTransform, transform.position).gameObject);
@@ -54,7 +53,7 @@ public class SphereRespawn : MonoBehaviour
         //Передача параметрів шару
         BallBehavior sb = ball.GetComponent<BallBehavior>();
         sb.Move(pathPoints, false);                                 //шлях, по якому рухатись
-        sb.ID = ballID;
+        //sb.ID = ballID;
         sb.Speed = Speed;
         sb.RespIndex = RespIndex;
 
@@ -63,14 +62,14 @@ public class SphereRespawn : MonoBehaviour
             sb.FrontBall = frontBall.gameObject;
             sb.FrontBallID = frontBall.ID;
             frontBall.BackBall = ball;
-            frontBall.BackBallID = ballID;
+           // frontBall.BackBallID = ballCount;
         }
         frontBall = sb;
 
-        ballID++;
+        ballCount++;
 
         balls.Add(ball);
-        BallController.setBallList(balls);
+        BallController.AddBallsList(balls);
     }
     
     //гізмо

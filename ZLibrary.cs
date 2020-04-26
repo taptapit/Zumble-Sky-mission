@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -22,8 +23,8 @@ namespace ZLibrary
     }
 
     //ПОВЕДІНКА СФЕР
-    //Сфера - об'єкт, якому може бути заданий рух
-    //Сфера має дві сусідні сфери "передню" та "задню". Має властивості для цього значення (сусідів може не бути).
+    //Куля - об'єкт, якому може бути заданий рух
+    //Куля має дві сусідні куля "передню" та "задню". Має властивості для цього значення (сусідів може не бути).
     public interface IBall : IMovingObject
     {
         public GameObject FrontBall { get; set; }
@@ -47,8 +48,13 @@ namespace ZLibrary
 
     public class BallCreator
     {
-        //
-        //Повертає шар випадкового кольору з базових кольорів
+        //Зміна кольору кулі
+        public void ChengeColor(GameObject ball, TypesSphere typeBall)
+        {
+            ball.transform.GetComponent<Renderer>().material.color = GetColorByType(typeBall);
+        }
+
+        //Повертає кулю випадкового кольору з базових кольорів
         public Transform getBall(Transform ball,           //який об'єкт створювати
                                   Vector3 placeToCreate)    //в якій позиції
         {
@@ -58,10 +64,31 @@ namespace ZLibrary
         //Повертає шар певного кольору
         public Transform getBall(Transform ball,           //який об'єкт створювати
                           Vector3 placeToCreate,            //в якій позиції
-                          TypesSphere typeBall)              //якого кольору(чи іншого типу для некольорового)
+                          TypesSphere typeBall)             //якого кольору(чи іншого типу для некольорового)
+        {
+            Transform result = Transform.Instantiate(ball, placeToCreate, Quaternion.identity);
+
+            result.GetComponent<Renderer>().material.color = GetColorByType(typeBall);
+            return result;
+        }
+
+        TypesSphere randomType(bool isColorBall)
+        {
+            int min = 0;
+            int max = 0;
+            if (isColorBall)
+            {
+                min = 0;
+                max = 5;
+            }
+
+            System.Random ran = new System.Random();
+            return (TypesSphere)ran.Next(min, max);
+        }
+
+        private Vector4 GetColorByType(TypesSphere typeBall)
         {
             Vector4 color;
-            Transform result = Transform.Instantiate(ball, placeToCreate, Quaternion.identity);
             switch (typeBall)
             {
                 case TypesSphere.RED:
@@ -91,7 +118,7 @@ namespace ZLibrary
                     }
                 case TypesSphere.EMPTY:
                     {
-                        color = new Vector4(1,1,1,0);
+                        color = new Vector4(1, 1, 1, 0);
                         break;
                     }
                 default:
@@ -100,33 +127,15 @@ namespace ZLibrary
                         break;
                     }
             }
-
-            result.GetComponent<Renderer>().material.color = color;
-            return result;
+            return color;
         }
-
-        TypesSphere randomType(bool isColorBall)
-        {
-            int min = 0;
-            int max = 0;
-            if (isColorBall)
-            {
-                min = 0;
-                max = 5;
-            }
-
-            System.Random ran = new System.Random();
-            return (TypesSphere)ran.Next(min, max);
-        }
-
     }
 
     static public class BallController
     {
-        static private List<List<GameObject>> ballsLists = new List<List<GameObject>>();      //списки з шарами всіх створених респавнів
-        static private List<GameObject> test;
+        static private List<List<GameObject>> ballsLists = new List<List<GameObject>>();      //списки з кулями всіх створених респавнів
 
-        static public void setBallList(List<GameObject> balls)
+        static public void AddBallsList(List<GameObject> balls)
         {
             ballsLists.Add(balls);
         }
@@ -141,5 +150,50 @@ namespace ZLibrary
                     return ballsLists.Count;
             }
         }
+
+        static public List<GameObject> GetBalls(int ballsListIndex)
+        {
+            return ballsLists[ballsListIndex];
+        }
+
+        static public List<GameObject> GetForwardBalls(int ballsListIndex, GameObject target)
+        {
+            int thisBallIndex = GetBalls(ballsListIndex).IndexOf(target);
+            Debug.Log($"ballIndex={thisBallIndex}");
+
+            if (thisBallIndex <= 0)
+            {
+                return null;
+            }
+            
+
+            return GetBalls(ballsListIndex).GetRange(0, thisBallIndex);
+        }
+
+        /*  static public List<GameObject> GetTowarddBalls(int ballsListIndex, GameObject target)
+          {
+              int thisBallIndex = ballsLists[ballsListIndex].IndexOf(target);
+
+              if (thisBallIndex == ballsLists[ballsListIndex].Count-1)
+              {
+                  return null;
+              }
+
+              return ballsLists[ballsListIndex].GetRange(ballsLists[ballsListIndex], ballsLists[ballsListIndex].Count-1);
+          }*/
+
+        //логіка зіткнення кулі гравця з потоком куль
+        /*  static public void CheckCollision(GameObject atacker, GameObject target, int ballsListIndex)
+          {
+              if (ballsLists == null)
+                  return;
+
+              //сфери, попереду поточної
+              List<GameObject> forwardBalls = ballsLists[ballsListIndex].GetRange(ballsLists[ballsListIndex].IndexOf(target), ballsLists[ballsListIndex].Count-1);
+              foreach (GameObject ball in forwardBalls)
+              {
+
+              }
+          }*/
     }
 }
