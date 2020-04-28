@@ -5,9 +5,7 @@ using ZLibrary;
 
 public class BallBehavior : SphereBehaviour
 {
-    public int RespIndex { get; set; }            //індекс респавна шара, за замовчуванням 0
-
-    private TypesSphere typeSphere;
+  /*  private TypesSphere typeSphere;
     public TypesSphere TypeSphere 
     {
         get
@@ -21,5 +19,5 @@ public class BallBehavior : SphereBehaviour
             bc.ChengeColor(gameObject, typeSphere);
 
         }
-    } 
+    } */
 }

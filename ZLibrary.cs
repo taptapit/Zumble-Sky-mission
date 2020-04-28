@@ -7,30 +7,20 @@ namespace ZLibrary
 {
     //ПОВЕДІНКА ОБ'ЄКТА ЩО РУХАЄТЬСЯ
     //Кожному об'єкту може бути заданий рух. Рух задається за переданою множиною точок, або в напрямку
-    //Рух може бути заданий реверсно, з останньої точки переданого масиву до першої.
     //Швідкість може бути задана окремо
     //Об'єкт може бути зупинений
     //Має текстову властивість "тип сфери", що зберігає задані кольори, так і вказує на інші варіанти подібних об'єктів, наприклад "мультиколірна сфера", "сфера вибухівка", "ракета")
-    //Об'єкт має ID
+    //Куля має дві сусідні кулі - "передню" та "задню". Має властивості для цього значення (сусідів може не бути).
     public interface IMovingObject
     {
+        public Vector3 DestVector();                              //поточна точка призначення
         public void Move(Transform direction);                      //рух по напрямку
-        public void Move(List<Transform> path, bool isRevers);     //рух по списку точок
-        public void Stop();                                       //стоп
-        public float Speed { get; set; }                         //швидкість
-        public short TypeSphere { get; set; }                    //тип
-        public int ID { get; set; }                              //ID
-    }
-
-    //ПОВЕДІНКА СФЕР
-    //Куля - об'єкт, якому може бути заданий рух
-    //Куля має дві сусідні куля "передню" та "задню". Має властивості для цього значення (сусідів може не бути).
-    public interface IBall : IMovingObject
-    {
-        public GameObject FrontBall { get; set; }
-        public GameObject BackBall { get; set; }
-        public int FrontBallID { get; set; }
-        public int BackBallID { get; set; }
+        public void Move(List<Transform> path, bool isRevers);      //рух по списку точок
+        public void Stop();                                         //стоп
+        public GameObject FrontBall { get; set; }                   //куля попереду
+        public GameObject BackBall { get; set; }                    //куля позаду
+        public float Speed { get; set; }                            //швидкість
+        public short TypeSphere { get; set; }                       //тип
     }
 
     public enum TypesSphere
@@ -133,9 +123,9 @@ namespace ZLibrary
 
     static public class BallController
     {
-        static private List<List<GameObject>> ballsLists = new List<List<GameObject>>();      //списки з кулями всіх створених респавнів
+        static private List<List<GameObject>> ballsLists = new List<List<GameObject>>();      //списки з потоками куль всіх створених респавнів
 
-        static public void AddBallsList(List<GameObject> balls)
+        static public void AddBallsList(List<GameObject> balls)                                //створити новий список з потоком куль
         {
             ballsLists.Add(balls);
         }
@@ -159,7 +149,7 @@ namespace ZLibrary
         static public List<GameObject> GetForwardBalls(int ballsListIndex, GameObject target)
         {
             int thisBallIndex = GetBalls(ballsListIndex).IndexOf(target);
-            Debug.Log($"ballIndex={thisBallIndex}");
+            //Debug.Log($"ballIndex={thisBallIndex}");
 
             if (thisBallIndex <= 0)
             {

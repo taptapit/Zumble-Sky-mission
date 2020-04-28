@@ -5,10 +5,10 @@ using ZLibrary;
 
 public class GameControl : MonoBehaviour
 {
-    public Transform ballTransform;                
+    public Transform ballTransform;         //Яку кулю створити. Встановлюється в редакторі                
     private GameObject newSphere;
     public Transform moveTo;                //змінити (костиль в якості пустого об'єкта до якого рухатись. ставиться в редакторі)
-    SphereRespawn[] respawns;
+   // SphereRespawn[] respawns;
 
     public float speed;
     [SerializeField]
@@ -20,10 +20,11 @@ public class GameControl : MonoBehaviour
 
     BallCreator ballControl = new BallCreator();
 
-    private void Start()
+   private void Start()
     {
-        //Встановити індекси в 
-     /*   respawns = GetComponents<SphereRespawn>();
+        newSphere = ballControl.getBall(ballTransform, new Vector3(transform.position.x, transform.position.y, 0)).gameObject;
+        /*//Встановити індекси в 
+        respawns = GetComponents<SphereRespawn>();
         for (int i = 0; i < respawns.Length; i++)
         {
             respawns[i].RespIndex = i;
@@ -33,10 +34,9 @@ public class GameControl : MonoBehaviour
 
     void OnMouseDown()
     {
-        if (newSphere != null)
-        {
-            return;
-        }
+      /*  if(newSphere!=null)
+            if (newSphere.tag !="ball")
+                return;*/
 
         if (moveTo==null)
         {
@@ -45,10 +45,14 @@ public class GameControl : MonoBehaviour
         }
 
         moveTo.position = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y,10));
-        newSphere = ballControl.getBall(ballTransform, transform.position).gameObject;
+       
         //newSphere.tag = "player";
-        SphereBehaviour sb  =  newSphere.GetComponent<SphereBehaviour>();
+        PlayerSphereBehaviour sb  =  newSphere.GetComponent<PlayerSphereBehaviour>();
         sb.Speed = Speed;
         sb.Move(moveTo);
+
+        newSphere = ballControl.getBall(ballTransform, new Vector3(transform.position.x, transform.position.y, 0)).gameObject;
+
+        // newSphere = null;                   //прибрати
     }
 }

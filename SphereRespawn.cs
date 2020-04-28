@@ -13,10 +13,8 @@ public class SphereRespawn : MonoBehaviour
     public Transform ballTransform;         // Шар, який буде створено
     private int ballCount;                   // ID шара
     private BallBehavior frontBall;         // передній шар
-    public int countOfBalls;                // кількість шарів з респавна
 
-    //швидкість
-    public float speed;
+    public float speed;                     //швидкість
     [SerializeField]
     public float Speed
     {
@@ -24,6 +22,7 @@ public class SphereRespawn : MonoBehaviour
         set { speed = value; }
     }
 
+    public int countOfBalls;                // кількість шарів з респавна
     [SerializeField]
     public int CountOfBalls
     {
@@ -31,13 +30,9 @@ public class SphereRespawn : MonoBehaviour
         set { countOfBalls = value; }
     }
 
-    public int RespIndex { get; set; }                   // Індекс респавна в листі
-
-    // Start is called before the first frame update
     void Start()
     {
-        RespIndex = BallController.BallsListIndex;
-        SetBallMembers(ballCreator.getBall(ballTransform, transform.position, TypesSphere.EMPTY).gameObject); // перша сфера
+        SetBallPropertis(ballCreator.getBall(ballTransform, transform.position, TypesSphere.EMPTY).gameObject); // перша сфера
     }
 
     //Генерує сферу, якщо попередня виходить за межі колайдера спавна (респавн повинен мати статичний колайдер!)
@@ -46,32 +41,29 @@ public class SphereRespawn : MonoBehaviour
         if (countOfBalls <= ballCount || previos.tag!="ball")
             return;
 
-        SetBallMembers(ballCreator.getBall(ballTransform, transform.position).gameObject);
+        SetBallPropertis(ballCreator.getBall(ballTransform, transform.position).gameObject);
+        ballCount++;
     }
-    void SetBallMembers(GameObject ball)
+
+    void SetBallPropertis(GameObject ball)                          //Передача параметрів кулі
     {
-        //Передача параметрів шару
         BallBehavior sb = ball.GetComponent<BallBehavior>();
         sb.Move(pathPoints, false);                                 //шлях, по якому рухатись
         //sb.ID = ballID;
         sb.Speed = Speed;
-        sb.RespIndex = RespIndex;
+        sb.RespIndex = BallController.BallsListIndex;               //
 
         if (frontBall != null)
         {
             sb.FrontBall = frontBall.gameObject;
-            sb.FrontBallID = frontBall.ID;
             frontBall.BackBall = ball;
-           // frontBall.BackBallID = ballCount;
         }
         frontBall = sb;
-
-        ballCount++;
 
         balls.Add(ball);
         BallController.AddBallsList(balls);
     }
-    
+
     //гізмо
     public void OnDrawGizmos()
     {

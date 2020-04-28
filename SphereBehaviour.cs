@@ -3,53 +3,75 @@ using System.Collections.Generic;
 using UnityEngine;
 using ZLibrary;
 
-public class SphereBehaviour : MonoBehaviour, IBall
+public class SphereBehaviour : MonoBehaviour, IMovingObject
 {
     public short TypeSphere { get; set; }                           //тип
     public int ID { get; set; }                                     //ID
     public GameObject FrontBall { get; set; }                       //сусід попереду
     public GameObject BackBall { get; set; }                        //сусід позаду
-    public int FrontBallID { get; set; }                            //ID сусіда позаду
-    public int BackBallID { get; set; }                             //ID сусіда попереду
+    public int RespIndex { get; set; }                              //індекс респавна шара, за замовчуванням 0
 
     public List<Transform> pathPoints;                              //точки маршруту
-    //public List<Transform> oldPathPoints;                         //пройдені точки. Використовуються для реверса
-    internal int destPointIndex;                                     //індекс поточної точки, до якої здійснювати рух
+    internal int destPointIndex;                                    //індекс поточної точки, до якої здійснювати рух
     private bool isRun;                                             //Чи почато рух(також для завдання руху та зупинки)
-    private int movDirection=1;                                     //Напрямок руху   
-    internal bool isDirection;                                               //тип руху
-   // private IEnumerator<Transform> point;
+    internal bool isDirection;                                      //тип руху
 
     //швидкість
-    private float speed;                                            
+    private float speed;
     [SerializeField]
     public float Speed
     {
         get { return speed; }
-        set { speed = value; } 
+        set { speed = value; }
     }
 
-    //private bool isLastPoint = false;
-
-    void Update()
+    void FixedUpdate()
     {
-        if (pathPoints == null || !isRun)
-             return;
+        Muving();
+    }
 
-        if(!isDirection)
-            transform.position = Vector3.MoveTowards(transform.position, destVector(), Speed * Time.deltaTime);
+    float a=1.0f;
+    Quaternion or;
+    void Start()
+    {
+        or = transform.rotation;
+    }
+    virtual public void Muving()
+    {
+        if (pathPoints == null || !isRun)                             //шлях відсутній або об'єкт не повинен рухатись
+            return;
+
+        Quaternion rotY = Quaternion.AngleAxis(a*4, new Vector3(0, 1, 0));
+        Quaternion rotZ = Quaternion.AngleAxis(a, new Vector3(0, 0, 1));
+        if (!isDirection)
+        {
+            Vector3 relativePos = pathPoints[destPointIndex].position - transform.position;
+            transform.rotation = Quaternion.LookRotation(relativePos);
+            transform.position = Vector3.MoveTowards(transform.position, DestVector(), Speed * Time.deltaTime); //рух до точки
+            //transform.LookAt(pathPoints[destPointIndex]);*/
+            //transform.rotation *=rotY ;
+            //transform.rotation = Quaternion.RotateTowards(transform.rotation, pathPoints[destPointIndex].rotation, Time.deltaTime*2.0f);
+
+            /*  Vector3 targetDir = pathPoints[destPointIndex].position - transform.position;
+                float step = 2.0f * Time.deltaTime;
+                Vector3 newDir = Vector3.RotateTowards(transform.forward, targetDir, step, 0.0F);
+                Debug.DrawRay(transform.position, newDir, Color.red);
+                transform.rotation = rotY * Quaternion.LookRotation(newDir);*/
+            // a += 1.0f;
+        }
         else
-                        //dir = (m_pos - (Vector2)transform.position).normalized;
-            transform.Translate(((destVector()).normalized) * Speed * Time.deltaTime);
+        {
+            transform.Translate(((DestVector()).normalized) * Speed * Time.deltaTime);  //рух в напрямку
+
+        }
     }
 
-    //Поточний вектор призначення
-    Vector3 destVector()        
+    public Vector3 DestVector()                                                //Поточний вектор призначення
     {
-         if (pathPoints[destPointIndex].position == transform.position && destPointIndex < pathPoints.Count-1)
-             destPointIndex++;
+        if ((Vector3.Distance(pathPoints[destPointIndex].position, transform.position)<Speed*Time.deltaTime ) && destPointIndex < pathPoints.Count - 1)
+            destPointIndex++;
 
-         return pathPoints[destPointIndex].position;
+        return pathPoints[destPointIndex].position;                    //наступна точка призначення
     }
 
     //наказ рухатись по напрямку 
@@ -71,8 +93,6 @@ public class SphereBehaviour : MonoBehaviour, IBall
         isDirection = false;
         isRun = true;
         pathPoints = path;
-        if (isRevers)
-            movDirection = -1;
     }
 
     //наказ зупинитись
@@ -81,63 +101,24 @@ public class SphereBehaviour : MonoBehaviour, IBall
         isRun = false;
     }
 
+    bool IsMoveForwardOneBall = false;
 
-    // if
+    public void MoveForwardOneBall()
+    {
+        IsMoveForwardOneBall = true;
+    }
 
+    public IEnumerator TestCoroutine(bool isFirst)
+    {
+        while (true)
+        {
+            yield return null;
+            Speed = 5.0f;
 
-    /* public IEnumerator<Transform> GetNextPathPoint()                //отримати положення наступної точки
-     {
-         if (pathPoints == null || pathPoints.Count < 1) //
-         {
-             Debug.Log("1:pathPoints == null");
-             yield break;
-         }
-
-         while (true)
-         {
-             Debug.Log("2:while start");
-             yield return pathPoints[destPointIndex];
-
-             if (pathPoints.Count == 1)
-             {
-                 Debug.Log("3:pathPoints.Count == 1");
-                 continue;
-             }
-
-             if (destPointIndex <= 0)
-             {
-                 Debug.Log("4:destPointIndex <= 0");
-                 movDirection = 1;
-             }
-             else if (destPointIndex >= pathPoints.Count - 1)
-             {
-                 Debug.Log("5:destPointIndex >= pathPoints.Count - 1");
-                 movDirection = -1;
-             }
-
-             destPointIndex += movDirection;
-             Debug.Log($"6:destPointIndex += movDirection = {destPointIndex}");
-         }
-     }*/
+            //if (Vector3.Distance(BackBall.transform.position, transform.position)>=(isFirst?4.0f:2.0f)/*gameObject.GetComponent<CircleCollider2D>().radius*(isFirst?4:2)*/)
+            //{
+              // Speed = 1.0f;// BackBall.GetComponent<SphereBehaviour>().Speed;
+             //}
+        }
+    }
 }
-
-//інтерполяція, допрацювати по необхідності. Варіант не робочий
-/* public static Vector3 Mov(List<Transform> vertices, float startTime, float duration)
- {
-     if (Time.time - startTime < duration)
-     {
-         float posit = (Time.time - startTime) * vertices.Count / duration;
-
-         int lposit = (int)System.Math.Floor(posit);
-         int rposit = (int)System.Math.Ceiling(posit);
-
-         Vector3 start = vertices[lposit].position;
-         Vector3 end = vertices[rposit].position;
-
-         float factor = posit - lposit;
-
-         return Vector3.Lerp(start, end, factor);
-     }
-     else
-         return vertices[vertices.Count - 1].position;
- }*/

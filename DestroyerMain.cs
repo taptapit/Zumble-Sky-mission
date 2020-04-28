@@ -8,7 +8,7 @@ public class DestroyerMain : MonoBehaviour
     {
         if (coll.gameObject.tag == "ball")
         {
-            List<GameObject> balls = BallController.GetBalls(coll.gameObject.GetComponent<BallBehavior>().RespIndex);
+            List<GameObject> balls = BallController.GetBalls(coll.gameObject.GetComponent<SphereBehaviour>().RespIndex);
             balls.Remove(coll.gameObject);
             Destroy(coll.gameObject);
         }
