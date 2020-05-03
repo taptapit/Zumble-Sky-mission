@@ -11,8 +11,9 @@ public class SphereRespawn : MonoBehaviour
     public List<Transform> pathPoints;      //Точки руху для шару що генерує даний респавн
     public List<GameObject> balls;          //Лист шарів для цього потоку(з цього респавна)
     public Transform ballTransform;         // Шар, який буде створено
-    private int ballCount;                   // ID шара
-    private BallBehavior frontBall;         // передній шар
+    private int ballCount;                  // 
+    private GameObject frontBall;           // передній шар
+    public int RespID;                      //ID респауну. Виставляється в редакторі від 0 до 9.
 
     public float speed;                     //швидкість
     [SerializeField]
@@ -32,36 +33,52 @@ public class SphereRespawn : MonoBehaviour
 
     void Start()
     {
-        SetBallPropertis(ballCreator.getBall(ballTransform, transform.position, TypesSphere.EMPTY).gameObject); // перша сфера
+        BallController.AddBallsList(balls, RespID);
+        TypesSphere typeSphere = ballCreator.randomType(true);
+        SetBallPropertis(ballCreator.getBall(ballTransform, transform.position, typeSphere).gameObject, typeSphere); // перша сфера
+        ballCount++;
     }
 
     //Генерує сферу, якщо попередня виходить за межі колайдера спавна (респавн повинен мати статичний колайдер!)
     void OnTriggerExit2D(Collider2D previos)
     {
-        if (countOfBalls <= ballCount || previos.tag!="ball")
+        if (countOfBalls == ballCount)
+        {
+            previos.tag = "ball";
+            return;
+        }
+
+        if (previos.tag != "newBall")
             return;
 
-        SetBallPropertis(ballCreator.getBall(ballTransform, transform.position).gameObject);
+        TypesSphere typeSphere = ballCreator.randomType(true);
+        GameObject ball = ballCreator.getBall(ballTransform, transform.position, typeSphere).gameObject;
+        SetBallPropertis(ball, typeSphere);
         ballCount++;
+        previos.tag = "ball";
     }
 
-    void SetBallPropertis(GameObject ball)                          //Передача параметрів кулі
+    void SetBallPropertis(GameObject ball, TypesSphere typeSphere)                          //Передача параметрів кулі
     {
-        BallBehavior sb = ball.GetComponent<BallBehavior>();
+        SphereBehaviour sb = ball.GetComponent<SphereBehaviour>();
+
+       if(pathPoints==null)
+            Debug.Log("null");
         sb.Move(pathPoints, false);                                 //шлях, по якому рухатись
-        //sb.ID = ballID;
         sb.Speed = Speed;
-        sb.RespIndex = BallController.BallsListIndex;               //
+        sb.RespIndex = RespID;                                      //Індекс для звернення до масиву зі списком куль відповідає айді респауна
+        sb.TypeSphere = typeSphere;
 
         if (frontBall != null)
         {
-            sb.FrontBall = frontBall.gameObject;
-            frontBall.BackBall = ball;
+            sb.FrontBall = frontBall;
+            frontBall.GetComponent<SphereBehaviour>().BackBall = ball;
+         //   Debug.Log(frontBall.GetComponent<SphereBehaviour>().TypeSphere);
         }
-        frontBall = sb;
+        frontBall = sb.gameObject;
 
-        balls.Add(ball);
-        BallController.AddBallsList(balls);
+        //Debug.Log(sb.TypeSphere);
+        // balls.Add(ball);
     }
 
     //гізмо

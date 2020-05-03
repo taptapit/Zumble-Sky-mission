@@ -18,18 +18,13 @@ public class GameControl : MonoBehaviour
         set { speed = value; }
     }
 
-    BallCreator ballControl = new BallCreator();
+    BallCreator ballCreator = new BallCreator();
 
    private void Start()
     {
-        newSphere = ballControl.getBall(ballTransform, new Vector3(transform.position.x, transform.position.y, 0)).gameObject;
-        /*//Встановити індекси в 
-        respawns = GetComponents<SphereRespawn>();
-        for (int i = 0; i < respawns.Length; i++)
-        {
-            respawns[i].RespIndex = i;
-            BallController.setBallList(respawns[i].balls);
-        }*/
+        TypesSphere typeSphere = ballCreator.randomType(true);
+        newSphere = ballCreator.getBall(ballTransform, new Vector3(transform.position.x, transform.position.y, 0), typeSphere).gameObject;
+        newSphere.GetComponent<SphereBehaviour>().TypeSphere = typeSphere;
     }
 
     void OnMouseDown()
@@ -51,8 +46,34 @@ public class GameControl : MonoBehaviour
         sb.Speed = Speed;
         sb.Move(moveTo);
 
-        newSphere = ballControl.getBall(ballTransform, new Vector3(transform.position.x, transform.position.y, 0)).gameObject;
-
+        TypesSphere typeSphere = ballCreator.randomType(true);
+        newSphere = ballCreator.getBall(ballTransform, new Vector3(transform.position.x, transform.position.y, 0), typeSphere).gameObject;
+        sb = newSphere.GetComponent<PlayerSphereBehaviour>();
+        sb.TypeSphere = typeSphere;
+        //Debug.Log(sb.TypeSphere);
         // newSphere = null;                   //прибрати
+    }
+
+    void Update()
+    {
+        if (BallController.BallsLists == null)
+            return;
+
+        foreach (List<GameObject> balls in BallController.BallsLists)
+        {
+            if (balls == null)
+                continue;
+
+            if (balls.Count < 3)
+            {
+                balls.Clear();
+                continue;
+            }
+
+            foreach (GameObject ball in balls)
+                Destroy(ball, 0.2f);
+
+            balls.Clear();
+        }
     }
 }

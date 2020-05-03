@@ -20,7 +20,7 @@ namespace ZLibrary
         public GameObject FrontBall { get; set; }                   //куля попереду
         public GameObject BackBall { get; set; }                    //куля позаду
         public float Speed { get; set; }                            //швидкість
-        public short TypeSphere { get; set; }                       //тип
+        public TypesSphere TypeSphere { get; set; }                       //тип
     }
 
     public enum TypesSphere
@@ -50,7 +50,7 @@ namespace ZLibrary
         {
             return getBall(ball, placeToCreate, randomType(true));
         }
-        
+
         //Повертає шар певного кольору
         public Transform getBall(Transform ball,           //який об'єкт створювати
                           Vector3 placeToCreate,            //в якій позиції
@@ -62,7 +62,7 @@ namespace ZLibrary
             return result;
         }
 
-        TypesSphere randomType(bool isColorBall)
+        public TypesSphere randomType(bool isColorBall)
         {
             int min = 0;
             int max = 0;
@@ -123,22 +123,16 @@ namespace ZLibrary
 
     static public class BallController
     {
-        static private List<List<GameObject>> ballsLists = new List<List<GameObject>>();      //списки з потоками куль всіх створених респавнів
+        static private List<GameObject>[] ballsLists = new List<GameObject>[10];      //масив з списками потоків куль всіх створених респавнів(до десяти)
 
-        static public void AddBallsList(List<GameObject> balls)                                //створити новий список з потоком куль
+        static public List<GameObject>[] BallsLists
         {
-            ballsLists.Add(balls);
+            get{return ballsLists;}
         }
 
-        static public int BallsListIndex
+        static public void AddBallsList(List<GameObject> balls, int index)                                //створити новий список з потоком куль
         {
-            get
-            {
-                if (ballsLists == null)
-                    return 0;
-                else
-                    return ballsLists.Count;
-            }
+            ballsLists[index] = balls;
         }
 
         static public List<GameObject> GetBalls(int ballsListIndex)
@@ -149,41 +143,57 @@ namespace ZLibrary
         static public List<GameObject> GetForwardBalls(int ballsListIndex, GameObject target)
         {
             int thisBallIndex = GetBalls(ballsListIndex).IndexOf(target);
-            //Debug.Log($"ballIndex={thisBallIndex}");
 
             if (thisBallIndex <= 0)
-            {
                 return null;
-            }
-            
+
+            CleanBallList(ballsListIndex);
 
             return GetBalls(ballsListIndex).GetRange(0, thisBallIndex);
         }
 
-        /*  static public List<GameObject> GetTowarddBalls(int ballsListIndex, GameObject target)
+        static void CleanBallList(int ballsListIndex)            //костиль. В одному кадрі видаляється куля та відбувається звертання до списку, до її видалення з нього? Це додаткова перевірка (по нормальному зайва)
+        {
+            for (int i = 0; i < ballsLists[ballsListIndex].Count; i++)
+                if (ballsLists[ballsListIndex][i]==null)
+                {
+                    Debug.LogError("Куля відсутня. індекс="+i);
+                    ballsLists[ballsListIndex].RemoveAt(i);
+                }
+        }
+
+          static public void InsertBallToList(List<GameObject> forward, GameObject ball ,int respIndex)
           {
-              int thisBallIndex = ballsLists[ballsListIndex].IndexOf(target);
+                List<GameObject> bufer = new List<GameObject>();
 
-              if (thisBallIndex == ballsLists[ballsListIndex].Count-1)
-              {
-                  return null;
-              }
+            //Debug.Log("ballsLists[respIndex].Count="+ ballsLists[respIndex].Count);
+            if (forward != null)
+                bufer = ballsLists[respIndex].GetRange(forward.Count, ballsLists[respIndex].Count - forward.Count);
+            else
+            {
+                forward = new List<GameObject>();
+                bufer = ballsLists[respIndex];
+            }
 
-              return ballsLists[ballsListIndex].GetRange(ballsLists[ballsListIndex], ballsLists[ballsListIndex].Count-1);
-          }*/
+            if (ball==null)
+            {
+                Debug.Log("ball == null");
+            }
+            if (forward== null)
+            {
+                Debug.Log("forward == null");
+            }
+                forward.Add(ball);
+           Debug.Log("ballsLists[respIndex]_1=" + ballsLists[respIndex].Count);
+                ballsLists[respIndex].Clear();
+                ballsLists[respIndex].AddRange(forward);
+                ballsLists[respIndex].AddRange(bufer);
+            Debug.Log("ballsLists[respIndex]_2=" + ballsLists[respIndex].Count);
+        }
 
-        //логіка зіткнення кулі гравця з потоком куль
-        /*  static public void CheckCollision(GameObject atacker, GameObject target, int ballsListIndex)
-          {
-              if (ballsLists == null)
-                  return;
-
-              //сфери, попереду поточної
-              List<GameObject> forwardBalls = ballsLists[ballsListIndex].GetRange(ballsLists[ballsListIndex].IndexOf(target), ballsLists[ballsListIndex].Count-1);
-              foreach (GameObject ball in forwardBalls)
-              {
-
-              }
-          }*/
+        static public void DelBallFromList(GameObject ball, int respIndex)
+        {
+            ballsLists[respIndex].Remove(ball);
+        }
     }
 }
