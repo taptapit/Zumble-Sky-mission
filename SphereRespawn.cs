@@ -56,6 +56,7 @@ public class SphereRespawn : MonoBehaviour
         SetBallPropertis(ball, typeSphere);
         ballCount++;
         previos.tag = "ball";
+       // previos.GetComponent<SphereBehaviour>().Stop();
     }
 
     void SetBallPropertis(GameObject ball, TypesSphere typeSphere)                          //Передача параметрів кулі
@@ -65,6 +66,7 @@ public class SphereRespawn : MonoBehaviour
        if(pathPoints==null)
             Debug.Log("null");
         sb.Move(pathPoints, false);                                 //шлях, по якому рухатись
+        
         sb.Speed = Speed;
         sb.RespIndex = RespID;                                      //Індекс для звернення до масиву зі списком куль відповідає айді респауна
         sb.TypeSphere = typeSphere;

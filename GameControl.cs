@@ -21,11 +21,11 @@ public class GameControl : MonoBehaviour
     BallCreator ballCreator = new BallCreator();
 
    private void Start()
-    {
+   {
         TypesSphere typeSphere = ballCreator.randomType(true);
         newSphere = ballCreator.getBall(ballTransform, new Vector3(transform.position.x, transform.position.y, 0), typeSphere).gameObject;
         newSphere.GetComponent<SphereBehaviour>().TypeSphere = typeSphere;
-    }
+   }
 
     void OnMouseDown()
     {

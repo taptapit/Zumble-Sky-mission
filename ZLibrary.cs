@@ -125,6 +125,13 @@ namespace ZLibrary
     {
         static private List<GameObject>[] ballsLists = new List<GameObject>[10];      //масив з списками потоків куль всіх створених респавнів(до десяти)
 
+        static  BallController()
+        {
+            for (int i = 0; i < ballsLists.Length; i++)
+            {
+                ballsLists[i] = new List<GameObject>();                                 //ініціалізація списків в конструкторі
+            }
+        }
         static public List<GameObject>[] BallsLists
         {
             get{return ballsLists;}
