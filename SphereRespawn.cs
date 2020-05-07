@@ -56,12 +56,12 @@ public class SphereRespawn : MonoBehaviour
         SetBallPropertis(ball, typeSphere);
         ballCount++;
         previos.tag = "ball";
-       // previos.GetComponent<SphereBehaviour>().Stop();
+        // previos.GetComponent<BallBehaviour>().Stop();
     }
 
     void SetBallPropertis(GameObject ball, TypesSphere typeSphere)                          //Передача параметрів кулі
     {
-        SphereBehaviour sb = ball.GetComponent<SphereBehaviour>();
+        BallBehaviour sb = ball.GetComponent<BallBehaviour>();
 
        if(pathPoints==null)
             Debug.Log("null");
@@ -74,8 +74,8 @@ public class SphereRespawn : MonoBehaviour
         if (frontBall != null)
         {
             sb.FrontBall = frontBall;
-            frontBall.GetComponent<SphereBehaviour>().BackBall = ball;
-         //   Debug.Log(frontBall.GetComponent<SphereBehaviour>().TypeSphere);
+            frontBall.GetComponent<BallBehaviour>().BackBall = ball;
+            //   Debug.Log(frontBall.GetComponent<BallBehaviour>().TypeSphere);
         }
         frontBall = sb.gameObject;
 

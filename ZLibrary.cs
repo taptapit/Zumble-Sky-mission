@@ -124,7 +124,9 @@ namespace ZLibrary
     static public class BallController
     {
         static private List<GameObject>[] ballsLists = new List<GameObject>[10];      //масив з списками потоків куль всіх створених респавнів(до десяти)
-
+        static public int lastForwardBallIndex;
+        static public bool readyToDestroy;           //використовується для визначення моменту, в який можна звертатись до списку, для недопущення знищення куль, до яких ще буде потрібен доступ
+        static public bool redyToRunNewPlayerBall = true;   //використовується для визначення, чи можна запускати нову кулю.
         static  BallController()
         {
             for (int i = 0; i < ballsLists.Length; i++)
@@ -134,7 +136,10 @@ namespace ZLibrary
         }
         static public List<GameObject>[] BallsLists
         {
-            get{return ballsLists;}
+            get
+            {
+                return ballsLists;
+            }
         }
 
         static public void AddBallsList(List<GameObject> balls, int index)                                //створити новий список з потоком куль
@@ -147,6 +152,7 @@ namespace ZLibrary
             return ballsLists[ballsListIndex];
         }
 
+        //використовувалась для отримання передніх куль в списку, на данний момент не використовую
         static public List<GameObject> GetForwardBalls(int ballsListIndex, GameObject target)
         {
             int thisBallIndex = GetBalls(ballsListIndex).IndexOf(target);
@@ -169,6 +175,7 @@ namespace ZLibrary
                 }
         }
 
+            //Використовувалась для вбудовування кулі в середину списку. На данний момент не використовую
           static public void InsertBallToList(List<GameObject> forward, GameObject ball ,int respIndex)
           {
                 List<GameObject> bufer = new List<GameObject>();

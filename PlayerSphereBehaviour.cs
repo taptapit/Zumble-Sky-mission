@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using ZLibrary;
 
-public class PlayerSphereBehaviour : SphereBehaviour
+public class PlayerSphereBehaviour : BallBehaviour
 {
     private bool isCollidet = false;                    //зіткнення вже відбулося (костиль від повторного зіткнення з іншою кулею)
-    private bool isRotableBall = true;                  //чи ще крутиться куля навколо іншої
+    internal bool isRotableBall = true;                  //чи ще крутиться куля навколо іншої
     private bool isClockwise = false;                   //в яку сторону обертається куля при ударі(залежить від кута удару)
     public bool isRealDistanceMeasurement;              //вимірювання дистанції для розрахунку точки руху. false: рахувати куля - точка, true: рахувати повний шлях по сумі елементів шляху 
 
-    private SphereBehaviour collBallSb;
+    private BallBehaviour collBallSb;
 
     private float angle;
     private float angleSpeed => (Speed / 4) * Time.deltaTime;
@@ -32,7 +32,7 @@ public class PlayerSphereBehaviour : SphereBehaviour
         {
             isRotableBall = false;                                      //обертатись більше не потрібно
 
-            PlayerCheckToDestroy();
+            //PlayerCheckToDestroy();
             GetPrefFromBackBall();
 
             if (!isClockwise)
@@ -48,9 +48,10 @@ public class PlayerSphereBehaviour : SphereBehaviour
 
                 angle = angle + ((((180 - pathAngle) / 2) * Mathf.PI) / 180.0f);
 
-                transform.position = MuvingOnCircle(angle, radius, isClockwise, true) + collBallSb.gameObject.transform.position;
+                transform.position = MuvingOnCircle(angle, radius+0.01f, isClockwise, true) + collBallSb.gameObject.transform.position;
             }
 
+            PlayerCheckToDestroy();                          // провести перевірку чи не потрібно знищити кулі
             Move(pathPoints, false, Speed);                  //рухатись в напрямку потоку, зі швидкістю потоку 
             return;
         }
@@ -65,32 +66,40 @@ public class PlayerSphereBehaviour : SphereBehaviour
         return new Vector3(x,y,0);
     }
 
-     void OnTriggerEnter2D(Collider2D collBall)
-     {
-         if (collBall.gameObject.tag != "ball" || isCollidet)                                //чи вдарились в ряд куль
-             return;
+    public override void CollisionOfBalls(GameObject collBall)
+    {
+        if (collBall.tag != "ball")                      //чи вдарились в ряд куль
+            return;
 
-        gameObject.tag = "ball";
+        if(isCollidet)
+        {
+            base.CollisionOfBalls(collBall);           //Якщо зіткнення вже відбувалось, то опрацьовувати як звичайну кулю
+            return;
+        }
+
+        gameObject.tag = "ball";                        //Помітити як звичайну кулю
 
         angle = Mathf.Atan2((transform.position.y - collBall.transform.position.y), (transform.position.x - collBall.transform.position.x));
         if (angle < 0)
             angle += TPi;
 
-        GameObject collidetBall = collBall.gameObject;
-        collBallSb = collidetBall.GetComponent<SphereBehaviour>();
-        if (PathAngle(collBall.gameObject) >= 90)
+        GameObject collidetBall = collBall;
+        collBallSb = collidetBall.GetComponent<BallBehaviour>();
+
+        //Три основні варіанти зіткнення - з заходом в перед кулі, в зад кулі та в перед кулі але з перенаправленням на задню кулю (для обрахунку більшості ударів одноманітним чином - з закотом проти часової стрілки)
+        if (PathAngle(collBall) >= 90)                          //1. Удар в передню частину кулі
         {
-            BackBall = collBall.gameObject;
-            collBallSb = BackBall.GetComponent<SphereBehaviour>();
+            BackBall = collBall;
+            collBallSb = BackBall.GetComponent<BallBehaviour>();
 
             if (collBallSb.FrontBall != null)
             {
-                FrontBall = collBallSb.FrontBall;                       //призначити передню кулю, якщо вона є
-                FrontBall.GetComponent<SphereBehaviour>().BackBall = gameObject;
+                FrontBall = collBallSb.FrontBall;               //призначити передню кулю, якщо вона є
+                FrontBall.GetComponent<BallBehaviour>().BackBall = gameObject;
             }
-            collBallSb.FrontBall = gameObject;                          //призначити поточну кулю як нову передню для задньої
+            collBallSb.FrontBall = gameObject;                  //призначити поточну кулю як нову передню для задньої
         }
-        else if (collBallSb.BackBall != null)
+        else if (collBallSb.BackBall != null)                   //2. Псевдо удар в задню частину кулі, який рахується як удар в передню частину задньої кулі
         {
             FrontBall = collBallSb.gameObject;
             BackBall = collBallSb.BackBall;
@@ -102,62 +111,80 @@ public class PlayerSphereBehaviour : SphereBehaviour
             if (beta < Mathf.PI)
                 angle = beta - (Mathf.PI * 4.0f / 3.0f);
             else
-                angle = beta  + Mathf.PI - (Mathf.PI / 3.0f);
+                angle = beta + Mathf.PI - (Mathf.PI / 3.0f);
 
             collBallSb.BackBall = gameObject;
-            collBallSb = BackBall.GetComponent<SphereBehaviour>();
+            collBallSb = BackBall.GetComponent<BallBehaviour>();
 
             collBallSb.FrontBall = gameObject;
         }
-        else
+        else                                                    //3. Дійсний удар в задню частину кулі, якщо інших варіантів не лишилось(удар в хвіст потоку, або по одиночній кулі)
         {
             isClockwise = true;
-
-            FrontBall = collBall.gameObject;
-            collBallSb = FrontBall.GetComponent<SphereBehaviour>();
+            //Debug.Log("REAL BACK");
+            FrontBall = collBall;
+            collBallSb = FrontBall.GetComponent<BallBehaviour>();
             if (collBallSb.BackBall != null)
             {
                 BackBall = collBallSb.BackBall;
-                BackBall.GetComponent<SphereBehaviour>().FrontBall = gameObject;
+                BackBall.GetComponent<BallBehaviour>().FrontBall = gameObject;
             }
             collBallSb.BackBall = gameObject;
         }
 
-        if (FrontBall != null && BackBall!=null)
-            FrontBall.GetComponent<SphereBehaviour>().MoveOneStep();
+        if (FrontBall != null && BackBall != null)      //Якщо потрібно від'їхати вперед, та звільнити місце
+        {
+            //Debug.Log("MoveOneStep");
+            FrontBall.GetComponent<BallBehaviour>().MoveOneStep(this);
+        }
 
         pathPoints = new List<Transform>(collBallSb.pathPoints);
 
-        RespIndex = collBall.GetComponent<SphereBehaviour>().RespIndex;                     //отримує індекс списку куль
+        RespIndex = collBall.GetComponent<BallBehaviour>().RespIndex;                     //отримує індекс списку куль
 
-        isCollidet = true;                                                                  //костиль від спрацювання тригера на двох кулях
+        isCollidet = true;    //костиль від спрацювання тригера на двох кулях
+
+        //collBallSb.IsLocalLastBall = true;
+
+       // base.CollisionoOfBalls(collBall);
     }
-
+    /*void OnTriggerEnter2D(Collider2D collBall)
+     {
+  
+    }*/
+     
     void GetPrefFromBackBall()                                        //налаштування, які необхідно зробити з новою кулею, якщо вона вбудовуються в ряд
     {
         RespIndex = collBallSb.RespIndex;
 
         if (BackBall != null)
         {
-            SphereBehaviour BackBallSb = BackBall.GetComponent<SphereBehaviour>();
+            BallBehaviour BackBallSb = BackBall.GetComponent<BallBehaviour>();
             Speed = BackBallSb.Speed;
             destPointIndex = SetDestPointIndex(BackBallSb);
         }
-        else
+        else                                                        //якщо куля стає останньою в послідовності
         {
             destPointIndex = SetDestPointIndex(collBallSb);
             Speed = collBallSb.Speed;
+
+            if (collBallSb.IsLocalLastBall)                         //якщо куля перед нею була позначена як остання в послідовності і нерухома
+            {
+                collBallSb.IsLocalLastBall = false;
+                IsLocalLastBall = true;
+            }
         }
+        baseSpead = collBallSb.baseSpead;
+        BallController.redyToRunNewPlayerBall = true;
     }
 
-    private int SetDestPointIndex(SphereBehaviour collBallSb)              //визначення точки, до якої рухатись
+    private int SetDestPointIndex(BallBehaviour collBallSb)              //визначення точки, до якої рухатись
     {
         if (BackBall == null)
             return collBallSb.destPointIndex;
 
         if (collBallSb.pathPoints.Count > collBallSb.destPointIndex+1)         //якщо точка не остання
         {
-
             //пошук найближчою точки для руху на відстані не менше визначених трешхолдів 
             //(радіус задньої сфери плюс діаметер поточної - гарантія що не поїде проти руху)
             float distance = Vector3.Distance(collBallSb.pathPoints[collBallSb.destPointIndex].position, collBallSb.transform.position);                  //дистанція до точки для руху попередньої сфери                                                
@@ -180,12 +207,18 @@ public class PlayerSphereBehaviour : SphereBehaviour
         List<GameObject> destroyList = new List<GameObject>();
         destroyList = BallController.GetBalls(RespIndex);
         destroyList.Add(gameObject);
+        //Debug.Log("0_destroyList.count=" + destroyList.Count);
+        BallController.lastForwardBallIndex = 0;
 
         if (FrontBall != null)
-            FrontBall.GetComponent<SphereBehaviour>().CheckToDestroy(true, this);
+            FrontBall.GetComponent<BallBehaviour>().CheckToDestroy(true, this);
+        else
+            BallController.readyToDestroy = true;       //якщо передніх куль немає (і їх не потрібно зсувати) - то розблокувати процес знищення куль
 
         if (BackBall != null)
-            BackBall.GetComponent<SphereBehaviour>().CheckToDestroy(false, this);
+            BackBall.GetComponent<BallBehaviour>().CheckToDestroy(false, this);
+        else
+            BallController.readyToDestroy = true;       //якщо задніх куль не має і зсуву передніх робити також не потрібно - то розблокувати процес знищення куль
     }
 
     private float PathAngle(GameObject ball)
@@ -198,5 +231,10 @@ public class PlayerSphereBehaviour : SphereBehaviour
     private float PointToPointAngle(Vector3 ball, Vector3 point)
     {
         return Mathf.Atan2(( point.y - ball.y), (point.x - ball.x));        
+    }
+
+    void OnDestroy()
+    {
+        BallController.redyToRunNewPlayerBall = true;
     }
 }
