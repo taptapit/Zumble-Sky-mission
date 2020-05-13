@@ -5,32 +5,44 @@ using ZLibrary;
 public class DestroyerMain : MonoBehaviour
 {
     public float lifetime = 0.3f;
-    void OnTriggerEnter2D(Collider2D coll)
+    void OnTriggerEnter2D(Collider2D collBall)
     {
-        if (coll.gameObject.tag == "ball")
-        {
+        DestroyProcess(collBall.gameObject);
+    }
 
+    void OnTriggerStay2D(Collider2D collBall)
+    {
+        DestroyProcess(collBall.gameObject);
+    }
+
+    void DestroyProcess(GameObject ball)
+    {
+        if (ball.tag == "ball")
+        {
             // BallController.BallsLists[5].Add(coll.gameObject);
-            var bufer = (GameObject)coll.gameObject;
+            //var bufer = (GameObject)coll.gameObject;
             /*List<GameObject> balls = BallController.GetBalls(coll.gameObject.GetComponent<SphereBehaviour>().RespIndex);
             balls.Remove(coll.gameObject);*/
-            Destroy(bufer);
+            Destroy(ball);
         }
+        else if (ball.tag == "player")
+            if (ball.GetComponent<PlayerSphereBehaviour>().isCollidet)
+                Destroy(ball);
     }
 
-    public IEnumerator DestroyCoroutine(GameObject ball)
-    {
+    /* public IEnumerator DestroyCoroutine(GameObject ball)
+     {
 
-        while (true)
-        {
-            yield return null;
+         while (true)
+         {
+             yield return null;
 
-            if (true)
-            {
+             if (true)
+             {
 
-                yield break;
-            }
-        }
-    }
+                 yield break;
+             }
+         }
+     }*/
     //додати знищення на протязі 1-2секунди, якщо інший предмет завис в зіткненні з цим
 }

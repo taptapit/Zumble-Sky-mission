@@ -15,7 +15,7 @@ namespace ZLibrary
     {
         public Vector3 DestVector();                              //поточна точка призначення
         public void Move(Transform direction);                      //рух по напрямку
-        public void Move(List<Transform> path, bool isRevers);      //рух по списку точок
+        public void Move(List<Transform> path, int Step);      //рух по списку точок
         public void Stop();                                         //стоп
         public GameObject FrontBall { get; set; }                   //куля попереду
         public GameObject BackBall { get; set; }                    //куля позаду
@@ -48,7 +48,7 @@ namespace ZLibrary
         public Transform getBall(Transform ball,           //який об'єкт створювати
                                   Vector3 placeToCreate)    //в якій позиції
         {
-            return getBall(ball, placeToCreate, randomType(true));
+            return getBall(ball, placeToCreate, randomType(true, 4));
         }
 
         //Повертає шар певного кольору
@@ -62,14 +62,14 @@ namespace ZLibrary
             return result;
         }
 
-        public TypesSphere randomType(bool isColorBall)
+        public TypesSphere randomType(bool isColorBall, int countColor)
         {
             int min = 0;
             int max = 0;
             if (isColorBall)
             {
                 min = 0;
-                max = 5;
+                max = countColor;
             }
 
             System.Random ran = new System.Random();
