@@ -123,7 +123,6 @@ public class BallBehaviour : SphereBehaviour
         else
             Move(speed, step);                            //продовжити рух самій
     }
-
     public IEnumerator AccelerationCoroutine(float speed, float acceleration, int step)  //плавний старт/стоп
     {
         float currentSpead = acceleration>0?0:Speed;

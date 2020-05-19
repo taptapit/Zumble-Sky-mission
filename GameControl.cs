@@ -13,6 +13,8 @@ public class GameControl : MonoBehaviour
     public Transform moveTo;                //змінити (костиль в якості пустого об'єкта до якого рухатись. ставиться в редакторі)
                                             // SphereRespawn[] respawns;
 
+    SaveInfo save = new SaveInfo();
+
     public int countColor;                 //Кількість кольорів у куль. Має бути налаштованим з GameControl
     [SerializeField]
     public int CountColor                   //кількість колькорів, від 1 до 4.
@@ -48,6 +50,9 @@ public class GameControl : MonoBehaviour
 
     void Start()
     {
+        save = SaveLoadGame.Load();
+        Debug.Log(save.curLvl);
+
         foreach (var resp in respawns)
         {
             resp.CountColor = CountColor;
