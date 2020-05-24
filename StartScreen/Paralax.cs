@@ -5,7 +5,7 @@ using UnityEngine;
 public class Paralax : MonoBehaviour
 {
     private float lengthX, lengthY, startPositionX, startPositionY;
-    public GameObject camera;
+    public GameObject cam;
     public float parallaxEffect;
     public float speed;                                         // швидкість руху вліво
 
@@ -19,8 +19,8 @@ public class Paralax : MonoBehaviour
 
     void Update()
     {
-        float temp = (camera.transform.position.y) * (1-parallaxEffect);
-        float dist = camera.transform.position.y * parallaxEffect;
+        float temp = (cam.transform.position.y) * (1-parallaxEffect);
+        float dist = cam.transform.position.y * parallaxEffect;
 
         transform.position = new Vector3(transform.position.x-speed*Time.deltaTime, startPositionY + dist, transform.position.z);
 

@@ -10,6 +10,8 @@ using System.IO;
 public class LoadScreenManager : MonoBehaviour
 {
     public Sprite[] advSprites;
+    public LoadScreenCamera loadScreenCam;    //для встановлення початкової позиції камери, відносно пройдених рівнів. Встановити в редакторі.
+
     public SpriteRenderer advSpriteRender;
     private int curAdvIndex;
     
@@ -20,9 +22,12 @@ public class LoadScreenManager : MonoBehaviour
     
     public Text textPlayerCurLvl;
 
+    public GameObject direction;           //стрілка вказівки що є нерозподілені скіллпоінти. Встановлюється в редакторі
+
     public Text[] textLvl;
 
-    SaveInfo save = new SaveInfo();
+    SaveInfo save;
+    SaveLoadGame saveLoadManager;
 
     // Start is called before the first frame update
     void Start()
@@ -34,31 +39,55 @@ public class LoadScreenManager : MonoBehaviour
         //Advertisement.Banner.SetPosition(BannerPosition.BOTTOM_CENTER);
         //Advertisement.Banner.Show("banner");
 
-        save = SaveLoadGame.Load();
-
-        if (save.maxCountMulticolor < 3) save.maxCountMulticolor = 3;
-        if (save.maxCountBeaver < 3) save.maxCountBeaver = 3;
-        if (save.maxCountExplosive < 3) save.maxCountExplosive = 3;
-        if (save.maxCountTimestop < 3) save.maxCountTimestop = 3;
+        saveLoadManager = new SaveLoadGame();
+        save = saveLoadManager.LoadSave();
 
         curAdvIndex = UnityEngine.Random.Range(0, 4);
         advSpriteRender.sprite = advSprites[curAdvIndex];
+
+        if (Advertisement.IsReady())
+        {
+            curAdvIndex = UnityEngine.Random.Range(0, 4);
+            advSpriteRender.sprite = advSprites[curAdvIndex];
+        }
+        else
+        {
+            advSpriteRender.gameObject.SetActive(false);
+        }
+
+        if (save.skillPoint > 0)
+            direction.SetActive(true);
+        else
+            direction.SetActive(false);
+
+        if (loadScreenCam != null)
+            for (int i = 0; i < textLvl.Length; i++)
+                if (save.maxOpenLvl > (i + 1) * 10)
+                    loadScreenCam.targetPos = textLvl[i].transform.position.y + 1.5f;
     }
 
+    bool isStartAdvCor = false;
     // Update is called once per frame
     void Update()
     {
         TextUpdate();
         TextLvlUpdate();
+
+        if (!isStartAdvCor && !advSpriteRender.gameObject.activeSelf)
+        {
+            StartCoroutine(AdvFinishCorutine());
+            isStartAdvCor = true;
+        }
     }
 
     private void TextUpdate()       //оновлення текстових полів головного екрану
     {
+        levelUp.CheckLevelUp(save);
         textPlayerCurLvl.text = "LEVEL " + save.playerLvl;
-        textCountExplosive.text = save.curCountExplosive + "/" + save.maxCountExplosive;
-        textCountMulticolor.text = save.curCountMulticolor + "/" + save.maxCountMulticolor;
-        textCountBeaver.text = save.curCountBeaver + "/" + save.maxCountBeaver;
-        textCountTimestop.text = save.curCountTimestop + "/" + save.maxCountTimestop;
+        textCountExplosive.text = save.curCountExplosive + "/" + (save.maxCountExplosive+save.skill[(int)PlayerSkill.SK_BONUS_MAX_EXPLOSIVE]);
+        textCountMulticolor.text = save.curCountMulticolor + "/" + (save.maxCountMulticolor + save.skill[(int)PlayerSkill.SK_BONUS_MAX_MULTICOLOR]);
+        textCountBeaver.text = save.curCountBeaver + "/" + (save.maxCountBeaver + save.skill[(int)PlayerSkill.SK_BONUS_MAX_BEAVER]);
+        textCountTimestop.text = save.curCountTimestop + "/" + (save.maxCountTimestop+save.skill[(int)PlayerSkill.SK_BONUS_MAX_TIMESTOP]);
     }
     private void TextLvlUpdate()       //оновлення текстових полів головного екрану
     {
@@ -99,7 +128,7 @@ public class LoadScreenManager : MonoBehaviour
         else
             save.curLvl = save.maxOpenLvl + (save.maxOpenLvl < 80 ? 1 : 0);
 
-         SaveLoadGame.Save(save);
+         SaveLoadGame.SaveGame(save);
          SceneManager.LoadScene(1);
     }
     public void button_start() => StartLvl(-1);
@@ -114,50 +143,66 @@ public class LoadScreenManager : MonoBehaviour
 
     public void button_skills()
     {
-        SaveLoadGame.Save(save);
-
+        SaveLoadGame.SaveGame(save);
         SceneManager.LoadScene(2);
     }
 
     public void button_adv()
     {
-
+        advSpriteRender.gameObject.SetActive(false);
+        isStartAdvCor = false;
         if (!AdShow())
             return;
 
         switch (curAdvIndex)
         {
             case 0:
-                save.curCountMulticolor += save.curCountMulticolor < save.maxCountMulticolor ? 1 : 0;
+                save.curCountMulticolor += save.curCountMulticolor < (save.maxCountMulticolor + save.skill[(int)PlayerSkill.SK_BONUS_MAX_MULTICOLOR]) ? 1 : 0;
                 break;
             case 1:
-                save.curCountBeaver += save.curCountBeaver < save.maxCountBeaver ? 1 : 0;
+                save.curCountBeaver += save.curCountBeaver < (save.maxCountBeaver + save.skill[(int)PlayerSkill.SK_BONUS_MAX_BEAVER] )? 1 : 0;
                 break;
             case 2:
-                save.curCountExplosive += save.curCountExplosive < save.maxCountExplosive ? 1 : 0;
+                save.curCountExplosive += save.curCountExplosive < (save.maxCountExplosive + save.skill[(int)PlayerSkill.SK_BONUS_MAX_EXPLOSIVE]) ? 1 : 0;
                 break;
-            case 3: 
-                save.curCountTimestop += save.curCountTimestop < save.maxCountTimestop ? 1 : 0;
+            case 3:
+                save.curCountTimestop += save.curCountTimestop < (save.maxCountTimestop + save.skill[(int)PlayerSkill.SK_BONUS_MAX_TIMESTOP]) ? 1 : 0;
                 break;
             default:
                 break;
         }
         TextUpdate();
 
-        curAdvIndex = UnityEngine.Random.Range(0, 4);
-        advSpriteRender.sprite = advSprites[curAdvIndex];
+        StartCoroutine(AdvFinishCorutine());
+    }
+
+    public IEnumerator AdvFinishCorutine()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(2.0f);
+
+            if (Advertisement.IsReady())
+            {
+                advSpriteRender.gameObject.SetActive(true);
+
+                curAdvIndex = UnityEngine.Random.Range(0, 4);
+                advSpriteRender.sprite = advSprites[curAdvIndex];
+                yield break;
+            }
+        }
     }
 
 #if UNITY_ANDROID && !UNITY_EDITOR
     private void OnApplicationPause(bool pause)
     {
-        if(pause) SaveLoadGame.Save(save);
+        if(pause) SaveLoadGame.SaveGame(save);
     }
 
 #endif
     private void OnApplicationQuit()
     {
-        SaveLoadGame.Save(save);
+        SaveLoadGame.SaveGame(save);
     }
 
     public static bool AdShow()
@@ -172,4 +217,6 @@ public class LoadScreenManager : MonoBehaviour
             return false;
         }
     }
+
+
 }

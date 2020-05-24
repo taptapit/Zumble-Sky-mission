@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using ZLibrary;
+//using ZLibrary;
 
 public class SphereBehaviour : MonoBehaviour, IMovingObject
 {

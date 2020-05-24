@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using ZLibrary;
+//using ZLibrary;
 
 public class BallBehaviour : SphereBehaviour
 {
@@ -52,7 +52,7 @@ public class BallBehaviour : SphereBehaviour
             {
                 if (value)                          //Якщо остання куля в послідовності  - рекурсивно зупинити передні кулі
                 {
-                    Debug.Log("IsLocalLastBall= " + IsLocalLastBall);
+                   // Debug.Log("IsLocalLastBall= " + IsLocalLastBall);
                     BallController.redyToRunNewPlayerBall = false;
                     StopAllCoroutines();
                     MoveForwardBall(10.0f, -1, true);
@@ -115,6 +115,11 @@ public class BallBehaviour : SphereBehaviour
         //Debug.Log("MoveForwardBall "+TypeSphere);
         if (FrontBall != null)                  //почати рух передньої кулі
         {
+            if (FrontBall==BackBall)
+            {
+                Debug.LogError("задня та передня куля співпадають");
+                Destroy(gameObject);
+            }
             FrontBall.GetComponent<BallBehaviour>().MoveForwardBall(speed, step, isSmoothStart);
         }
 
@@ -168,7 +173,7 @@ public class BallBehaviour : SphereBehaviour
      }*/
     public void ChangeSpeedForwardBalls(float Speed)    //рекурсивна зміна швидкості без команди на початок руху
     {
-        Debug.Log("Speed "+TypeSphere);
+       // Debug.Log("Speed "+TypeSphere);
         this.Speed = Speed;                      //Змінити швидкість без запуску руху
         if (FrontBall != null)                 
         {
@@ -177,7 +182,7 @@ public class BallBehaviour : SphereBehaviour
         //StopAllCoroutines();
     }
 
-    private bool blockRevers = false;
+    //private bool blockRevers = false;
     public override void Muving()
     {
         //Знову костилі. Запуск з OnDestroy() спрацьовує через раз.. Прийшлося перенести в виклик з апдейт
@@ -257,7 +262,7 @@ public class BallBehaviour : SphereBehaviour
 
     public IEnumerator AlignBallsCoroutine()
     {
-        Debug.Log("AlignBallsCoroutine");
+        //Debug.Log("AlignBallsCoroutine");
         while (true)
         {
             yield return null;
@@ -275,7 +280,7 @@ public class BallBehaviour : SphereBehaviour
                     MoveForwardBall(Speed + 2.0f, 1, false);
             else
             {
-                Debug.Log("AlignBallsCoroutine END");
+                //Debug.Log("AlignBallsCoroutine END");
                 MoveForwardBall(baseSpead, 1, false);
                 BallController.readyToDestroy = true;   //розблокувати перевірку на знищення
                 yield break;
@@ -333,7 +338,7 @@ public class BallBehaviour : SphereBehaviour
                       
         if (collBall.GetComponent<BallBehaviour>().FrontBall != null)
         {
-            Debug.LogError("FrontBall != null "+TypeSphere);
+            //Debug.LogError("FrontBall != null "+TypeSphere);
             return;
         }
         //Debug.Log("-=4=- "+ TypeSphere);

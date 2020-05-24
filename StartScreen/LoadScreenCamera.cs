@@ -9,14 +9,15 @@ public class LoadScreenCamera : MonoBehaviour
 
     private Vector2 startPosition;
     private Camera cam;                                         // скрипт повинен бути компонентом камери
-    private float targetPos;                                    // позиція дотику/кліку
+    public float targetPos;                                    // позиція дотику/кліку
     public float speed;                                         // швидкість при плавному скролі
     public float darknesRatio;                                  //швидкість затемнення фону по мірі скролу
 
     private void Start()
     {
         cam = GetComponent<Camera>();
-        targetPos = transform.position.y;
+        if(targetPos==0)                    //якщо змінна не встановлена з loadScreenManager, то встановити значення
+            targetPos = transform.position.y;
     }
     void Update()
     {

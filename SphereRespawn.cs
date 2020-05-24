@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using ZLibrary;
+//using ZLibrary;
 
 public class SphereRespawn : MonoBehaviour
 {
@@ -18,6 +18,8 @@ public class SphereRespawn : MonoBehaviour
 
     private int countColor;                 //Кількість кольорів у куль. Має бути налаштованим з GameControl
 
+    public bool IsInfiniteLaunch;           //чи запускати кулі безкінечно
+
     public int CountColor                   //кількість колькорів, від 1 до 4. Отримується з GameControl
     {
         get { return countColor; }
@@ -27,7 +29,13 @@ public class SphereRespawn : MonoBehaviour
     public bool IsStartVelocity
     { 
         get {return isStartVelocity;}
-        set {isStartVelocity = value;}
+        set
+        {
+
+            isStartVelocity = value;
+            if (value)
+                isFirstRun = true;
+        }
     }
 
     public float speed;                     //швидкість
@@ -59,7 +67,7 @@ public class SphereRespawn : MonoBehaviour
     //Генерує сферу, якщо попередня виходить за межі колайдера спавна (респавн повинен мати статичний колайдер!)
     void OnTriggerExit2D(Collider2D previos)
     {
-        if (countOfBalls == ballCount)
+        if (countOfBalls == ballCount && !IsInfiniteLaunch)
         {
             previos.GetComponent<BallBehaviour>().IsLastBallInResp = true;
             previos.tag = "ball";
@@ -117,7 +125,7 @@ public class SphereRespawn : MonoBehaviour
         // balls.Add(ball);
     }
 
-    private bool isFirstRun = true;
+    bool isFirstRun = true;
     private void SetBallVelocity(BallBehaviour sb)
     {
 
@@ -128,7 +136,7 @@ public class SphereRespawn : MonoBehaviour
         {
             if (isFirstRun)
             {
-                Debug.Log("isFirstRun. Speed="+ Speed + " balls="+balls.Count);
+                //Debug.Log("isFirstRun. Speed="+ Speed + " balls="+balls.Count);
                 sb.ChangeSpeedForwardBalls(Speed);
                 isFirstRun = false;
             }

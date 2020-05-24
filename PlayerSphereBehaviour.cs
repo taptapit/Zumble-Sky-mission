@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using ZLibrary;
+//using ZLibrary;
 
 public class PlayerSphereBehaviour : BallBehaviour
 {
@@ -154,8 +154,7 @@ public class PlayerSphereBehaviour : BallBehaviour
             BallBehaviour BackBallSb = BackBall.GetComponent<BallBehaviour>();
             Speed = BackBallSb.Speed;
             destPointIndex = SetFirstDestPointIndex(BackBallSb);
-            Debug.Log("i_2=" + destPointIndex);
-
+            //Debug.Log("i_2=" + destPointIndex);
         }
         else                                                        //якщо куля стає останньою в послідовності
         {
@@ -191,7 +190,7 @@ public class PlayerSphereBehaviour : BallBehaviour
 
                 if (distance > distanceTreshold * (isRealDistanceMeasurement ? 4.1f : 3.2f))                 //якщо дистанція достатня, то рухатись до даної точки
                 {
-                    Debug.Log("i="+i);
+                   // Debug.Log("i="+i);
                     return i;
                 }
             }
