@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-//using ZLibrary;
 
 public class SphereBehaviour : MonoBehaviour, IMovingObject
 {
@@ -221,10 +220,10 @@ public class SphereBehaviour : MonoBehaviour, IMovingObject
         pathPoints.Clear();
         pathPoints.Add(direction);
     }
-    public void Move(List<Transform> path, bool IsRevers)
+  /*  public void Move(List<Transform> path, bool IsRevers)
     {
 
-    }
+    }*/
     public void Move(List<Transform> path, int step)     //наказ рухатись по шляху
     {
         isDirection = false;

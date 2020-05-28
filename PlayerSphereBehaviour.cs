@@ -168,7 +168,7 @@ public class PlayerSphereBehaviour : BallBehaviour
             }*/
 
         }
-        baseSpead = collBallSb.baseSpead;
+        BaseSpeed = collBallSb.BaseSpeed;
     }
 
     private int SetFirstDestPointIndex(BallBehaviour collBallSb)              //визначення точки, до якої рухатись

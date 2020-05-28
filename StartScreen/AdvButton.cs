@@ -17,7 +17,6 @@ public class AdvButton : MonoBehaviour
         
     }
 
-
     public void button_adv()
     {
         //SceneManager.LoadScene(2);

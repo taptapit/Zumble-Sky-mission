@@ -54,6 +54,9 @@ public class BallCreator
                       TypesSphere typeBall)             //якого кольору(чи іншого типу для некольорового)
     {
         Transform result = Transform.Instantiate(ball, placeToCreate, Quaternion.identity);
+        
+        SphereBehaviour sb = result.gameObject.GetComponent<SphereBehaviour>();
+        sb.TypeSphere = typeBall;
 
         result.GetComponent<Renderer>().material.color = GetColorByType(typeBall);
         return result;

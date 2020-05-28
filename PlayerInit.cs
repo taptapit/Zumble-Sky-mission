@@ -14,9 +14,9 @@ public class PlayerInit : SaveInfo
         curCountMulticolor = 1;
         curCountBeaver = 1;
         curCountExplosive = 1;
-        curCountTimestop = 1;
+        curCountTimestop = 100;
 
-        skillPoint = 5;
+        skillPoint = 15;
        // playerExp = 160000;
 
        // maxOpenLvl = 46;

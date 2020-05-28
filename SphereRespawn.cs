@@ -9,16 +9,22 @@ public class SphereRespawn : MonoBehaviour
 
     //поля що встановлюються в редакторі
     public List<Transform> pathPoints;      //Точки руху для шару що генерує даний респавн
-    public List<GameObject> balls;          //Лист шарів для цього потоку(з цього респавна)
+    public List<BallBehaviour> ballsBh;     //Лист BallBehaviour для цього потоку(з цього респавна) //на даний момент не має практичного застосування
     public Transform ballTransform;         // Шар, який буде створено
     private int ballCount;                  // 
     private GameObject frontBall;           // передній шар
     public int RespID;                      //ID респауну. Виставляється в редакторі від 0 до 9.
-    private bool isStartVelocity;           //Чи запускати кулі з початковою швидкістю (на старті рівня кулі певний час виїжджають швидше, що б прискорити геймплей)
+  //  private bool isStartVelocity;           //Чи запускати кулі з початковою швидкістю (на старті рівня кулі певний час виїжджають швидше, що б прискорити геймплей)
+  //  private bool isFirstRun = true;
 
     private int countColor;                 //Кількість кольорів у куль. Має бути налаштованим з GameControl
 
+    BallBehaviour ballBehaviour;        //клас поточної кулі, яка запускається з даного респавна
+
     public bool IsInfiniteLaunch;           //чи запускати кулі безкінечно
+
+    public AccTrigger accTrigger;       //трігер зупинки прискорення, встановлюється в редакторі
+    public StopTrigger stopTrigger;
 
     public int CountColor                   //кількість колькорів, від 1 до 4. Отримується з GameControl
     {
@@ -26,24 +32,40 @@ public class SphereRespawn : MonoBehaviour
         set { countColor = value; }
     }
 
-    public bool IsStartVelocity
+   /* public bool IsStartVelocity
     { 
         get {return isStartVelocity;}
         set
         {
-
             isStartVelocity = value;
             if (value)
                 isFirstRun = true;
         }
-    }
+    }*/
 
-    public float speed;                     //швидкість
-    [SerializeField]
+    private float baseSpeed;                 //базова швидкість
+    private float speed;                     //швидкість
     public float Speed
     {
         get { return speed; }
-        set { speed = value; }
+        set 
+        { 
+            speed = value;
+            ballBehaviour?.ChangeSpeedForwardBalls(value, true);
+        }
+    }
+
+    public float BaseSpeed
+    {
+        get 
+        { 
+            return baseSpeed; 
+        }
+        set 
+        {
+            Speed = value;
+            baseSpeed = value; 
+        }
     }
 
     public int countOfBalls;                // кількість шарів з респавна
@@ -56,11 +78,20 @@ public class SphereRespawn : MonoBehaviour
 
     void Start()
     {
-        isStartVelocity = true;
+        ballCreator = new BallCreator();
+
+        accTrigger.triggerMessage += OnAccTriggerEvent;
+        //stopTrigger.triggerMessage += OnStopTriggerEvent;
+
+        Speed = 5.0f;
+        //isStartVelocity = true;
+
         //BallController.AddBallsList(balls, RespID);
         TypesSphere typeSphere = ballCreator.randomType(true, CountColor);
         GameObject ball = ballCreator.getBall(ballTransform, transform.position, typeSphere).gameObject;
-        SetBallPropertis(ball, typeSphere); // перша сфера
+        ballBehaviour = ball.GetComponent<BallBehaviour>();
+        ballsBh.Add(ballBehaviour);
+        SetBallPropertis(); // перша сфера
         ballCount++;
     }
 
@@ -79,7 +110,9 @@ public class SphereRespawn : MonoBehaviour
         
         TypesSphere typeSphere = ballCreator.randomType(true, CountColor);
         GameObject ball = ballCreator.getBall(ballTransform, transform.position, typeSphere).gameObject;
-        SetBallPropertis(ball, typeSphere);
+        ballBehaviour = ball.GetComponent<BallBehaviour>();
+        ballsBh.Add(ballBehaviour);
+        SetBallPropertis(); // перша сфера
         ballCount++;
         previos.tag = "ball";
         //previos.gameObject.GetComponent<CircleCollider2D>().isTrigger = true;
@@ -95,53 +128,115 @@ public class SphereRespawn : MonoBehaviour
             collBall.gameObject.GetComponent<BallBehaviour>().StopForwardBall();*/
     }
 
-    void SetBallPropertis(GameObject ball, TypesSphere typeSphere)                          //Передача параметрів кулі
+    void SetBallPropertis()                          //Передача параметрів кулі
     {
-        balls.Add(ball);
-        BallBehaviour sb = ball.GetComponent<BallBehaviour>();
+       // balls.Add(ball);
+       // BallBehaviour sb = ball.GetComponent<BallBehaviour>();
 
-       if(pathPoints==null)
+        if(pathPoints==null)
             Debug.Log("null");
-        sb.Move(pathPoints, 1);                                 //шлях, по якому рухатись
+        ballBehaviour.Move(pathPoints, 1);                                 //шлях, по якому рухатись
 
-       
-        sb.RespIndex = RespID;                                      //Індекс для звернення до масиву зі списком куль відповідає айді респауна
-        sb.TypeSphere = typeSphere;
-       // sb.Health = 1;
-       // sb.Health = 1;
-
+        ballBehaviour.RespIndex = RespID;                                      //Індекс для звернення до масиву зі списком куль відповідає айді респауна
+        // sb.TypeSphere = typeSphere;
+        // sb.Health = 1;
+        // sb.Health = 1;
+        
         if (frontBall != null)
         {
-            sb.FrontBall = frontBall;
-            frontBall.GetComponent<BallBehaviour>().BackBall = ball;
+            ballBehaviour.FrontBall = frontBall;
+            frontBall.GetComponent<BallBehaviour>().BackBall = ballBehaviour.gameObject;
 
             //   Debug.Log(frontBall.GetComponent<BallBehaviour>().TypeSphere);
         }
-        frontBall = sb.gameObject;
 
-        SetBallVelocity(sb);
+        frontBall = ballBehaviour.gameObject;
+
+        // SetBallVelocity();
+        ballBehaviour.Speed = Speed;
+        ballBehaviour.BaseSpeed = baseSpeed;
 
         //Debug.Log(sb.TypeSphere);
-        // balls.Add(ball);
     }
 
-    bool isFirstRun = true;
-    private void SetBallVelocity(BallBehaviour sb)
-    {
+    /// int timestopSkill;
 
-        sb.baseSpead = Speed;
-        if (IsStartVelocity)
-            sb.Speed = 5.0f;
-        else
+    /* private void SetBallVelocity()
+     {
+        // ballBehaviour.Speed = Speed;
+          ballBehaviour.baseSpead = Speed;
+         if (IsStartVelocity)
+             ballBehaviour.Speed = 5.0f;
+         else
+         {
+             if (isFirstRun)
+             {
+                 //Debug.Log("isFirstRun. Speed="+ Speed + " balls="+balls.Count);
+                 ballBehaviour.ChangeSpeedForwardBalls(Speed);
+                 isFirstRun = false;
+             }
+             else
+                 ballBehaviour.Speed = Speed;
+         }
+     }*/
+
+    private void OnAccTriggerEvent()
+    {
+        SetAllRespSpeed(BaseSpeed);
+        StartCoroutine(CheckCountBallsCoroutine());
+        BallController.redyToRunNewPlayerBall = true;
+    }
+    /*private void OnStopTriggerEvent(float speed)
+    {
+        accTrigger.isFirstTriggerEnter = true;
+        SetAllRespSpeed(speed);
+    }*/
+
+    private void SetAllRespSpeed(float speed)
+    {
+        Speed = speed;
+        Debug.Log("SetAllRespVelocity=" + Speed);
+        ballBehaviour.ChangeSpeedForwardBalls(Speed, true);
+    }
+
+    public IEnumerator TimestopBallsCoroutine(int timestopSkill)
+    {
+        //Debug.Log("AlignBallsCoroutine");
+        while (true)
         {
-            if (isFirstRun)
+            SetAllRespSpeed(0.2f);
+            Debug.Log(" timestopSkill="+ timestopSkill);
+            yield return new WaitForSecondsRealtime(8.0f * (timestopSkill+1));
+            Debug.Log(" yield break;");
+            SetAllRespSpeed(BaseSpeed);
+            yield break;
+        }
+    }
+
+    public IEnumerator CheckCountBallsCoroutine()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(4.0f);
+
+            List<BallBehaviour> bufer = new List<BallBehaviour>();
+            if (ballsBh != null)
             {
-                //Debug.Log("isFirstRun. Speed="+ Speed + " balls="+balls.Count);
-                sb.ChangeSpeedForwardBalls(Speed);
-                isFirstRun = false;
+                foreach (var ballBh in ballsBh)
+                    if (ballBh != null)
+                        bufer.Add(ballBh);
+
+                ballsBh.Clear();
+                ballsBh.AddRange(bufer);
+
+                if (bufer.Count==1 && accTrigger!=null)
+                {
+                    BallController.redyToRunNewPlayerBall = false;
+                    accTrigger.enableTrigger = true;
+                    SetAllRespSpeed(5.0f);
+                    bufer.Clear();
+                }
             }
-            else
-                sb.Speed = Speed;
         }
     }
 

@@ -4,25 +4,28 @@ using UnityEngine;
 
 public class AccTrigger : MonoBehaviour
 {
+    public delegate void TriggerHandler();
+    public event TriggerHandler triggerMessage;
 
-    public SphereRespawn resp;                      //встановлюється в редакторі
-    bool isFirstTriggerEnter;
+   // public SphereRespawn resp;                      //встановлюється в редакторі
+    public bool enableTrigger;
 
     // Start is called before the first frame update
     void Start()
     {
-        isFirstTriggerEnter = true;
+        enableTrigger = true;
     }
 
     void OnTriggerEnter2D(Collider2D collBall)
     {
-        if (!isFirstTriggerEnter)
+        if (!enableTrigger)
             return;
 
         if (collBall.gameObject.tag != "ball")
             return;
 
-         resp.IsStartVelocity = false;
-         isFirstTriggerEnter = false;
+        triggerMessage?.Invoke();
+        // resp.Speed = resp.BaseSpeed;
+        enableTrigger = false;
     }
 }

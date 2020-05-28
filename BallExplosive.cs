@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class BallExplosive : SphereBehaviour
 {
@@ -19,10 +17,11 @@ public class BallExplosive : SphereBehaviour
         BallController.redyToRunNewPlayerBall = true;
         
         //        if (rangExplosiveSkill==0)
-        DestroyBall(collBall.gameObject.GetComponent<BallBehaviour>().FrontBall, collBall.gameObject.GetComponent<BallBehaviour>().BackBall, rangExplosiveSkill+2);
-
-        Destroy(collBall.gameObject);
+        DestroyBall(collBall.gameObject.GetComponent<BallBehaviour>().FrontBall, collBall.gameObject.GetComponent<BallBehaviour>().BackBall, rangExplosiveSkill+1);
+        BallController.BallsLists[5].Add(collBall.gameObject);
+        //Destroy(collBall.gameObject);
         score += 2;
+
         Destroy(gameObject);
     }
 
@@ -36,14 +35,16 @@ public class BallExplosive : SphereBehaviour
         {
             nextFrontBall = frontBall.GetComponent<BallBehaviour>().FrontBall;
             score+=2;
-            Destroy(frontBall);
+            BallController.BallsLists[5].Add(frontBall);
+            //Destroy(frontBall);
         }
 
         if (backBall!=null)
         {
             nextBackBall = backBall.GetComponent<BallBehaviour>().BackBall;
             score+=2;
-            Destroy(backBall);
+            BallController.BallsLists[5].Add(backBall);
+            //Destroy(backBall);
         }
 
         count--;
@@ -54,10 +55,5 @@ public class BallExplosive : SphereBehaviour
         }
 
         DestroyBall(nextFrontBall, nextBackBall, count);
-    }
-
-    void HandleCustomEvent(object sender)
-    {
-        // Do something useful here.  
     }
 }

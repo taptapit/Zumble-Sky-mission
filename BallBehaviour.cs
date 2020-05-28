@@ -9,9 +9,16 @@ public class BallBehaviour : SphereBehaviour
     public bool isLocalLastBall;            //остання куля в локальній послідовності
     public bool isAlwaysRun;                 //повинна продовжувати рух, навіть якщо остання в послідовності 
     public short Health;                     //чи має куля запас хітпойнтів. За замовчуванням не має, знищується при першій підтвердженій умові  
-    internal float baseSpead;                 //базова швидкість, для відновлення руху з базовою швидкістю в разі потреби
+    public float BaseSpeed { get; set; }                 //базова швидкість, для відновлення руху з базовою швидкістю в разі потреби
 
     private bool isLastBallInResp = false;       //остання куля з даного респауна
+
+    //Змінні кулі, при знищенні якої отримується бонусна куля
+    public Sprite[] getAdvencedBallSprites;               //Спрайти відображення бонусної кулі на поточній кулі. Встановити в редакторі
+    public SpriteRenderer getAdvencedBallSpriteRender;      //Спрайтрендер для цих спрайтів, встановити в редакторі
+    [SerializeField]
+    public float ChanceToGetAdvencedBall { get; set; }     //Шанс на появу бонусної кулі. Публічний, для майбутнього корегування з керуючих об'єктів
+    public int AdvencedBallIndex { get; set; }           //Індекс поточної бонусної кулі. Обробляється геймконтролом при знищенні кулі. За замовчуванням встановити в -1.
 
     [SerializeField]
     public bool IsLastBallInResp
@@ -32,11 +39,24 @@ public class BallBehaviour : SphereBehaviour
             Destroy(gameObject, Random.Range(0.5f, 2.5f));
         }
     }
-    
+   
     public void Start()
     {
-        if(baseSpead==0)
-            baseSpead = Speed;    
+        if(BaseSpeed == 0)
+            BaseSpeed = Speed;
+
+        AdvencedBallIndex = -1;
+        if (ChanceToGetAdvencedBall == 0)
+            ChanceToGetAdvencedBall = 0.04f;
+
+        //Ввімкнути відображення бонусної кулі, якщо випав відповідний ролл на шанс
+        if (gameObject.tag== "newBall" && Random.Range(0.0f, 1.00f) < ChanceToGetAdvencedBall
+            && getAdvencedBallSpriteRender != null && getAdvencedBallSprites.Length>0)
+        {
+            AdvencedBallIndex = Random.Range(0, getAdvencedBallSprites.Length);
+            getAdvencedBallSpriteRender.sprite = getAdvencedBallSprites[AdvencedBallIndex];
+            getAdvencedBallSpriteRender.gameObject.SetActive(true);
+        }
     }
 
     [SerializeField]
@@ -60,7 +80,7 @@ public class BallBehaviour : SphereBehaviour
                 else                                //Якщо більше не остання куля - рекурсивно почати рух передніх куль
                 {
                     StopAllCoroutines();
-                    MoveForwardBall(baseSpead, 1, false);
+                    MoveForwardBall(BaseSpeed, 1, false);
                     StartCoroutine(AlignBallsCoroutine());
                     PlayerCheckToDestroy();
                     BallController.redyToRunNewPlayerBall = true;
@@ -110,7 +130,8 @@ public class BallBehaviour : SphereBehaviour
 
     public void MoveForwardBall(float speed, int step, bool isSmoothStart)    //рекурсивний початок руху передніх куль
     {
-        //StopAllCoroutines();
+        if (isSmoothStart)
+            StopAllCoroutines();            //в разі якщо буде плавний старт, то зупинити виконання інших корутин(може бути повторний старт тієї ж корутини з вильотом гри)
 
         //Debug.Log("MoveForwardBall "+TypeSphere);
         if (FrontBall != null)                  //почати рух передньої кулі
@@ -171,13 +192,15 @@ public class BallBehaviour : SphereBehaviour
              }
          }
      }*/
-    public void ChangeSpeedForwardBalls(float Speed)    //рекурсивна зміна швидкості без команди на початок руху
+    public void ChangeSpeedForwardBalls(float Speed, bool changeBaseSpeed)    //рекурсивна зміна швидкості без команди на початок руху
     {
        // Debug.Log("Speed "+TypeSphere);
         this.Speed = Speed;                      //Змінити швидкість без запуску руху
+        if (changeBaseSpeed)
+            this.BaseSpeed = Speed;
         if (FrontBall != null)                 
         {
-            FrontBall.GetComponent<BallBehaviour>().ChangeSpeedForwardBalls(Speed);
+            FrontBall.GetComponent<BallBehaviour>().ChangeSpeedForwardBalls(Speed, changeBaseSpeed);
         }
         //StopAllCoroutines();
     }
@@ -205,8 +228,8 @@ public class BallBehaviour : SphereBehaviour
     }   
     public void MoveOneStepForward(PlayerSphereBehaviour atackBall) //Coroutine запускається з метода, що б не створювати булеву змінну для виконання початкового коду тільки один раз
     {
-        //Speed = 5.0f;
-        MoveForwardBall(4.0f, 1, false);
+      //  Speed = 5.0f;
+        MoveForwardBall(Speed>4.0?8.0f:4.0f, 1, false);
         StartCoroutine(MoveOneStepForwardCoroutine(atackBall));
     }
     public IEnumerator MoveOneStepForwardCoroutine(PlayerSphereBehaviour atackBall)
@@ -234,7 +257,7 @@ public class BallBehaviour : SphereBehaviour
 
     private void EndOneStepCorProc()
     {
-        Speed = baseSpead;                      //повернути базову швидкість
+        Speed = BaseSpeed;                      //повернути базову швидкість
         MoveForwardBall(Speed, 1, false);        //дати команду переднім кулям рухатись в звичайному режимі
         StartCoroutine(AlignBallsCoroutine());
     }
@@ -268,7 +291,7 @@ public class BallBehaviour : SphereBehaviour
             yield return null;
             if (BackBall == null)           //повтора перевірка, на випадок якщо задня куля знищена під час виконання
             {
-                MoveForwardBall(baseSpead, 1, false);
+                MoveForwardBall(BaseSpeed, 1, false);
                 BallController.readyToDestroy = true;   //розблокувати перевірку на знищення
                 yield break;
             }
@@ -281,7 +304,7 @@ public class BallBehaviour : SphereBehaviour
             else
             {
                 //Debug.Log("AlignBallsCoroutine END");
-                MoveForwardBall(baseSpead, 1, false);
+                MoveForwardBall(BaseSpeed, 1, false);
                 BallController.readyToDestroy = true;   //розблокувати перевірку на знищення
                 yield break;
             }
@@ -312,54 +335,59 @@ public class BallBehaviour : SphereBehaviour
 
     virtual public void CollisionOfBalls(GameObject collBall)
     {
+       // Debug.Log("-=0=- " + TypeSphere);
         if (collBall.tag != "ball" && collBall.tag != "newBall")      //перервати, якщо колізія не з кулею
         {
-            //Debug.Log("-=1=-");
+           // Debug.Log("-=1=- " + TypeSphere);
             return;
         }
 
-        if (FrontBall == collBall)                  //ігнорувати спрацювання тригера від передньої кулі
+        if (FrontBall == collBall /*|| BackBall!=null*/)                  //ігнорувати спрацювання тригера від передньої кулі
             return;
 
         BallBehaviour collBallSb = collBall.GetComponent<BallBehaviour>();
-         //Debug.Log("-=2=-");
-        if (!IsLocalLastBall)               //перервати, якщо це була не остання куля в локальній послідовності
+       //  Debug.Log("-=2=- " + TypeSphere);
+        if (!IsLocalLastBall)               //якщо це була не остання куля в локальній послідовності
         {
-          // Debug.Log("не остання локальна куля: "+ IsLocalLastBall +" "+ TypeSphere);
-           if(collBallSb.IsLocalLastBall)
-           {
-                collBallSb.BackBall = gameObject;
-                FrontBall = collBall;
+            // Debug.Log("-=3=- не остання локальна куля: "+ IsLocalLastBall +" "+ TypeSphere);
+             if(collBallSb.IsLocalLastBall && collBall.GetComponent<BallBehaviour>().FrontBall != gameObject)
+             {
+                  collBallSb.BackBall = gameObject;
+                  FrontBall = collBall;
 
-                collBallSb.IsLocalLastBall = false;
-           }                  
+                  collBallSb.IsLocalLastBall = false;
+             }    
             return;
         }
-                      
+       // Debug.Log("-=4=- " + TypeSphere);
         if (collBall.GetComponent<BallBehaviour>().FrontBall != null)
         {
-            //Debug.LogError("FrontBall != null "+TypeSphere);
+            Debug.LogError("FrontBall != null "+TypeSphere);
             return;
         }
-        //Debug.Log("-=4=- "+ TypeSphere);
+       // Debug.Log("-=5=- "+ TypeSphere);
         
         BackBall = collBall;                        //встановлення посилання на нову задню кулю 
         collBallSb.FrontBall = gameObject;          //передача посилання на цю кулю як передньої, для тої що позаду
+      //  Debug.Log("-=6=- " + TypeSphere);
 
+        IsLocalLastBall = false;                   //Ця куля - вже не остання
+      //  Debug.Log("-=7=- " + TypeSphere);
 
-        IsLocalLastBall = false;                    //Ця куля - вже не остання
-
-       /* if(collBallSb.IsLocalLastBall)              //перевірка в обох кулях. (тригер не спрацьовує з об'єктом з нульовою швидкціст)
-            collBallSb.IsLocalLastBall = false;*/
+        /* if(collBallSb.IsLocalLastBall)              //перевірка в обох кулях. (тригер не спрацьовує з об'єктом з нульовою швидкціст)
+             collBallSb.IsLocalLastBall = false;*/
     }
 
     internal bool CheckToDestroy(bool isForward, SphereBehaviour sb)        //виклик по ланцюгу перевірки на один колір
     {
-        if (sb.TypeSphere != TypeSphere || Health > 0)            //перервати виконання, в разі якщо кулі не однакові
+        if ((sb.TypeSphere != TypeSphere && sb.TypeSphere != TypesSphere.MULCOLOR && TypeSphere != TypesSphere.MULCOLOR) || Health > 0)            //перервати виконання, в разі якщо кулі не однакові
+        {
+           // Debug.Log("3 sb.TypeSphere != TypesSphere.MULCOLOR = " + sb.TypeSphere);
             return false;
+        }
 
         //Debug.Log("Add. forward="+ isForward +" Type="+TypeSphere);
-            BallController.GetBalls(RespIndex).Add(gameObject);
+        BallController.GetBalls(RespIndex).Add(gameObject);
         //Debug.Log("1_destroyList.count=" + BallController.GetBalls(RespIndex).Count);
 
         if (isForward)

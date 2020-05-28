@@ -55,10 +55,13 @@ public class GameControl : MonoBehaviour
     [SerializeField]
     public float Speed
     {
-        get { return speed; }
+        get 
+        {
+            return speed + (float)save.skill[(int)PlayerSkill.SK_BONUS_SPEED] * 2.0f; 
+        }
         set 
         {
-            speed = value+(float)save.skill[(int)PlayerSkill.SK_BONUS_SPEED] * 2.0f;
+            speed = value;
         }
     }
 
@@ -66,12 +69,14 @@ public class GameControl : MonoBehaviour
 
     void Awake()
     {
-        BallController.redyToRunNewPlayerBall=true;     //костиль, виклик конструктора
-        ballCreator = new BallCreator();                //костиль, повторне створення екземпляра
+       // BallController.redyToRunNewPlayerBall=true;     //костиль, виклик конструктора
+        ballCreator = new BallCreator();         
     }
 
     void Start()
     {
+        BallController.redyToRunNewPlayerBall = false;
+
         if (explosiveBallTransform==null)
         {
             Debug.LogError("explosiveBallTransform==null");
@@ -90,23 +95,32 @@ public class GameControl : MonoBehaviour
 
         TypesSphere typeSphere = ballCreator.randomType(true, CountColor);    
         newSphere = ballCreator.getBall(ballTransform, transform.position, typeSphere).gameObject;
-        newSphere.GetComponent<BallBehaviour>().TypeSphere = typeSphere;
+       // newSphere.GetComponent<BallBehaviour>().TypeSphere = typeSphere;
         //  destroyLists = BallController.BallsLists;
     }
 
     //BallController.BallsLists - списки з кулями.
     // 1-4 списки (індекса 0-3) зарезервовані під респауни з тими ж індексами
     // 5-тий список (індекс 4) - зарезервований під взаємодію куль (крайніх куль в локальних послідовностях)
-    // 6-тий список (індекс 5) - для безпечного знищення куль. (безпосереднє знищення по тригеру може викликати "The object of type 'GameObject' has been destroyed but you are still trying to access it.") 
+    // 6-тий список (індекс 5) - для безумовного знищення куль.
     void Update()
     {
-        if (map.CountDestroyBalls>4)
-            GameOverProcess();
+      /*  if (map.CountDestroyBalls>4)
+            GameOverProcess();*/
 
         if (score > scoreToFinal)
             GameWinProcess();
         
         TextUpdate();
+
+        //Очистка шостого списка
+        if (BallController.BallsLists[5] != null)
+        {
+            foreach (GameObject ball in BallController.BallsLists[5])
+                DestroyProcess(ball);
+
+            BallController.BallsLists[5].Clear();
+        }
 
         if (BallController.BallsLists == null)
             return;
@@ -121,6 +135,7 @@ public class GameControl : MonoBehaviour
 
         BallController.readyToDestroy = false;      //закрити доступ до перевірки на знищення, до наступного відкриття в коді
 
+        //Очистка списка один-п'ять
         for (int i = 0; i < 4; i++)
         {
             if (BallController.BallsLists[i] == null)
@@ -140,15 +155,64 @@ public class GameControl : MonoBehaviour
             for (int j = 0; j < BallController.BallsLists[i].Count; j++)
             {
                 //  if(destroyLists[i][j].GetComponent<BallBehaviour>().Health<1)
-                Destroy(BallController.BallsLists[i][j]);
+                if (BallController.BallsLists[i][j] == null)
+                    continue;
+
+                DestroyProcess(BallController.BallsLists[i][j]);
+                /*int AdvencedBallIndex = BallController.BallsLists[i][j].GetComponent<BallBehaviour>().AdvencedBallIndex;
+                if (AdvencedBallIndex>-1)
+                {
+                    switch (AdvencedBallIndex)
+                    {
+                        case 0:
+                            save.curCountMulticolor += save.curCountMulticolor < (save.maxCountMulticolor + save.skill[(int)PlayerSkill.SK_BONUS_MAX_MULTICOLOR]) ? 1 : 0;
+                            break;
+                        case 1:
+                            save.curCountBeaver += save.curCountBeaver < (save.maxCountBeaver + save.skill[(int)PlayerSkill.SK_BONUS_MAX_BEAVER]) ? 1 : 0;
+                            break;
+                        case 2:
+                            save.curCountExplosive += save.curCountExplosive < (save.maxCountExplosive + save.skill[(int)PlayerSkill.SK_BONUS_MAX_EXPLOSIVE]) ? 1 : 0;
+                            break;
+                        case 3:
+                            save.curCountTimestop += save.curCountTimestop < (save.maxCountTimestop + save.skill[(int)PlayerSkill.SK_BONUS_MAX_TIMESTOP]) ? 1 : 0;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                Destroy(BallController.BallsLists[i][j]);*/
                 score++;
-                Debug.Log("score:"+score);
-                // Debug.Log(destroyList[i].GetComponent<BallBehaviour>().TypeSphere);
             }
             BallController.BallsLists[i].Clear();
         }
         BallController.redyToRunNewPlayerBall = true;
         //  SafeBallDestroy();
+    }
+
+    private void DestroyProcess(GameObject ball)
+    {
+        int AdvencedBallIndex = ball.GetComponent<BallBehaviour>().AdvencedBallIndex;
+        if (AdvencedBallIndex > -1)
+        {
+            switch (AdvencedBallIndex)
+            {
+                case 0:
+                    save.curCountMulticolor += save.curCountMulticolor < (save.maxCountMulticolor + save.skill[(int)PlayerSkill.SK_BONUS_MAX_MULTICOLOR]) ? 1 : 0;
+                    break;
+                case 1:
+                    save.curCountBeaver += save.curCountBeaver < (save.maxCountBeaver + save.skill[(int)PlayerSkill.SK_BONUS_MAX_BEAVER]) ? 1 : 0;
+                    break;
+                case 2:
+                    save.curCountExplosive += save.curCountExplosive < (save.maxCountExplosive + save.skill[(int)PlayerSkill.SK_BONUS_MAX_EXPLOSIVE]) ? 1 : 0;
+                    break;
+                case 3:
+                    save.curCountTimestop += save.curCountTimestop < (save.maxCountTimestop + save.skill[(int)PlayerSkill.SK_BONUS_MAX_TIMESTOP]) ? 1 : 0;
+                    break;
+                default:
+                    break;
+            }
+        }
+        Destroy(ball);
     }
 
     void OnMouseDown()
@@ -166,16 +230,18 @@ public class GameControl : MonoBehaviour
 
         moveTo.position = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y,10));
 
+        Vector3 relativePos = moveTo.position - player.transform.position;
+        transform.rotation = Quaternion.LookRotation(player.transform.forward, relativePos);
+
         //newSphere.tag = "player";
         SphereBehaviour sb  =  newSphere.GetComponent<SphereBehaviour>();
         sb.Speed = Speed;
         sb.Move(moveTo);
 
-
         TypesSphere typeSphere = ballCreator.randomType(true, CountColor);
         newSphere = ballCreator.getBall(ballTransform, transform.position, typeSphere).gameObject;
         sb = newSphere.GetComponent<SphereBehaviour>();
-        sb.TypeSphere = typeSphere;
+        //sb.TypeSphere = typeSphere;
         //Debug.Log(sb.TypeSphere);
         // newSphere = null;                   //прибрати
     }
@@ -227,9 +293,11 @@ public class GameControl : MonoBehaviour
         scoreProgressBar.currentValue = score;
         scoreProgressBar.fullValue = scoreToFinal;
 
-        if (map.sphereRespawnsList!=null)
+        if (map.sphereRespawnsList != null)
             foreach (var resp in map.sphereRespawnsList)
-                resp.speed = 0.4f + (float)curLvl / 50.0f;
+            {
+                resp.BaseSpeed = 0.4f + (float)curLvl / 50.0f;
+            }
     }
 
     public void AddScore(int count)
@@ -246,7 +314,11 @@ public class GameControl : MonoBehaviour
 
     private void GameWinProcess()
     {
-        save.playerExp += score * 3;
+        if ((float)save.skill[(int)PlayerSkill.SK_BONUS_EXP] > 0)
+            score = (score*110)/100;
+
+        save.playerExp += (score * 3);
+
         save.maxOpenLvl++;
         SaveLoadGame.SaveGame(save);
         SceneManager.LoadScene(0);
@@ -273,6 +345,10 @@ public class GameControl : MonoBehaviour
         TypesSphere typeSphere = TypesSphere.BEAVER;
         newSphere = ballCreator.getBall(beaverBallTransform, transform.position, typeSphere).gameObject;
 
+        BallBeaver advencedBall = newSphere.GetComponent<BallBeaver>();
+        advencedBall.PowerBeaverSkill = save.skill[(int)PlayerSkill.SK_BEAVER_POWER];
+        advencedBall.scoreMessage += AddScore;
+
         save.curCountBeaver--;
     }
 
@@ -284,14 +360,19 @@ public class GameControl : MonoBehaviour
         Destroy(newSphere);
         TypesSphere typeSphere = TypesSphere.MULCOLOR;
         newSphere = ballCreator.getBall(multicolorBallTransform, transform.position, typeSphere).gameObject;
+        BallMulticolor advencedBall = newSphere.GetComponent<BallMulticolor>();
+        advencedBall.powerMulticolorSkill = save.skill[(int)PlayerSkill.SK_BONUS_MAX_MULTICOLOR];
 
+        Debug.Log("newSphere type="+ newSphere.GetComponent<BallBehaviour>().TypeSphere);
         save.curCountMulticolor--;
     }
-
     public void OnButtonTimestop()
     {
         if (save.curCountTimestop < 1)
             return;
+
+        foreach (var resp in map.sphereRespawnsList)
+            resp.StartCoroutine(resp.TimestopBallsCoroutine(save.skill[(int)PlayerSkill.SK_BONUS_MAX_TIMESTOP]));
 
         save.curCountTimestop--;
     }
@@ -305,9 +386,9 @@ public class GameControl : MonoBehaviour
         TypesSphere typeSphere = TypesSphere.EXPLOSIVE;
         newSphere = ballCreator.getBall(explosiveBallTransform, transform.position, typeSphere).gameObject;
 
-        BallExplosive bex = newSphere.GetComponent<BallExplosive>();
-        bex.rangExplosiveSkill = save.skill[(int)PlayerSkill.SK_BONUS_EXP];
-        bex.scoreMessage += AddScore;
+        BallExplosive advencedBall = newSphere.GetComponent<BallExplosive>();
+        advencedBall.rangExplosiveSkill = save.skill[(int)PlayerSkill.SK_BONUS_EXP];
+        advencedBall.scoreMessage += AddScore;
 
         save.curCountExplosive--;
     }
