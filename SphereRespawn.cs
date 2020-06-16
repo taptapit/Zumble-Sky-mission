@@ -9,7 +9,7 @@ public class SphereRespawn : MonoBehaviour
 
     //поля що встановлюються в редакторі
     public List<Transform> pathPoints;      //Точки руху для шару що генерує даний респавн
-    public List<BallBehaviour> ballsBh;     //Лист BallBehaviour для цього потоку(з цього респавна) //на даний момент не має практичного застосування
+    //public List<BallBehaviour> ballsBh;     //Лист BallBehaviour для цього потоку(з цього респавна) //на даний момент не має практичного застосування
     public Transform ballTransform;         // Шар, який буде створено
     private int ballCount;                  // 
     private GameObject frontBall;           // передній шар
@@ -23,7 +23,7 @@ public class SphereRespawn : MonoBehaviour
 
     public bool IsInfiniteLaunch;           //чи запускати кулі безкінечно
 
-    public AccTrigger accTrigger;       //трігер зупинки прискорення, встановлюється в редакторі
+    public List<AccTrigger> accTrigger;       //трігер зупинки прискорення, встановлюється в редакторі
     public StopTrigger stopTrigger;
 
     public int CountColor                   //кількість колькорів, від 1 до 4. Отримується з GameControl
@@ -80,17 +80,19 @@ public class SphereRespawn : MonoBehaviour
     {
         ballCreator = new BallCreator();
 
-        accTrigger.triggerMessage += OnAccTriggerEvent;
+        foreach (var triger in accTrigger)
+            triger.triggerMessage += OnAccTriggerEvent;
         //stopTrigger.triggerMessage += OnStopTriggerEvent;
 
-        Speed = 5.0f;
+        BallController.blockPlayer = true;
+        Speed = 7.0f;
         //isStartVelocity = true;
 
         //BallController.AddBallsList(balls, RespID);
         TypesSphere typeSphere = ballCreator.randomType(true, CountColor);
         GameObject ball = ballCreator.getBall(ballTransform, transform.position, typeSphere).gameObject;
         ballBehaviour = ball.GetComponent<BallBehaviour>();
-        ballsBh.Add(ballBehaviour);
+        BallController.BallsLists[4].Add(ball);
         SetBallPropertis(); // перша сфера
         ballCount++;
     }
@@ -98,7 +100,7 @@ public class SphereRespawn : MonoBehaviour
     //Генерує сферу, якщо попередня виходить за межі колайдера спавна (респавн повинен мати статичний колайдер!)
     void OnTriggerExit2D(Collider2D previos)
     {
-        if (countOfBalls == ballCount && !IsInfiniteLaunch)
+        if (CountOfBalls <= ballCount && !IsInfiniteLaunch)
         {
             previos.GetComponent<BallBehaviour>().IsLastBallInResp = true;
             previos.tag = "ball";
@@ -111,7 +113,7 @@ public class SphereRespawn : MonoBehaviour
         TypesSphere typeSphere = ballCreator.randomType(true, CountColor);
         GameObject ball = ballCreator.getBall(ballTransform, transform.position, typeSphere).gameObject;
         ballBehaviour = ball.GetComponent<BallBehaviour>();
-        ballsBh.Add(ballBehaviour);
+        BallController.BallsLists[4].Add(ball);
         SetBallPropertis(); // перша сфера
         ballCount++;
         previos.tag = "ball";
@@ -184,7 +186,7 @@ public class SphereRespawn : MonoBehaviour
     {
         SetAllRespSpeed(BaseSpeed);
         StartCoroutine(CheckCountBallsCoroutine());
-        BallController.redyToRunNewPlayerBall = true;
+        BallController.blockPlayer = false;
     }
     /*private void OnStopTriggerEvent(float speed)
     {
@@ -195,7 +197,7 @@ public class SphereRespawn : MonoBehaviour
     private void SetAllRespSpeed(float speed)
     {
         Speed = speed;
-        Debug.Log("SetAllRespVelocity=" + Speed);
+        //Debug.Log("SetAllRespVelocity=" + Speed);
         ballBehaviour.ChangeSpeedForwardBalls(Speed, true);
     }
 
@@ -205,36 +207,46 @@ public class SphereRespawn : MonoBehaviour
         while (true)
         {
             SetAllRespSpeed(0.2f);
-            Debug.Log(" timestopSkill="+ timestopSkill);
+           // Debug.Log(" timestopSkill="+ timestopSkill);
             yield return new WaitForSecondsRealtime(8.0f * (timestopSkill+1));
-            Debug.Log(" yield break;");
+          //  Debug.Log(" yield break;");
             SetAllRespSpeed(BaseSpeed);
             yield break;
         }
     }
 
+    //CheckCountBallsCoroutine - вимикаю. Необхідно виправити баги фізики
+    bool blockKey;  //прискорення куль з затримкою в три секунди
     public IEnumerator CheckCountBallsCoroutine()
     {
         while (true)
         {
             yield return new WaitForSeconds(4.0f);
 
-            List<BallBehaviour> bufer = new List<BallBehaviour>();
-            if (ballsBh != null)
+            List<GameObject> bufer = new List<GameObject>();
+            if (BallController.BallsLists[4] != null)
             {
-                foreach (var ballBh in ballsBh)
+                foreach (var ballBh in BallController.BallsLists[4])
                     if (ballBh != null)
                         bufer.Add(ballBh);
 
-                ballsBh.Clear();
-                ballsBh.AddRange(bufer);
+                BallController.BallsLists[4].Clear();
+                BallController.BallsLists[4].AddRange(bufer);
 
-                if (bufer.Count==1 && accTrigger!=null)
+                if ((bufer.Count==1 && accTrigger!=null))
                 {
-                    BallController.redyToRunNewPlayerBall = false;
-                    accTrigger.enableTrigger = true;
-                    SetAllRespSpeed(5.0f);
+                   /* Debug.Log("-=2=-");
+                    BallController.blockPlayer = true;
+                    accTrigger.enableTrigger = true;*/
+
+                    /*if (blockKey)
+                    {
+                        SetAllRespSpeed(5.0f);
+                        blockKey = false;
+                    }*/
+
                     bufer.Clear();
+                    blockKey = true;
                 }
             }
         }

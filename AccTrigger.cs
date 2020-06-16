@@ -7,6 +7,9 @@ public class AccTrigger : MonoBehaviour
     public delegate void TriggerHandler();
     public event TriggerHandler triggerMessage;
 
+    public int minMapLvl = -1;           //мінімальний рівень карти, на якій спрацює цей тригер. Встановити в редакторі
+    public int currentMapLvl;           //поточний рівень карти. Передати з геймконтрола
+
    // public SphereRespawn resp;                      //встановлюється в редакторі
     public bool enableTrigger;
 
@@ -21,11 +24,14 @@ public class AccTrigger : MonoBehaviour
         if (!enableTrigger)
             return;
 
-        if (collBall.gameObject.tag != "ball")
-            return;
+        if ((minMapLvl < currentMapLvl) || minMapLvl == -1)
+        {
+            if (collBall.gameObject.tag != "ball")
+                return;
 
-        triggerMessage?.Invoke();
-        // resp.Speed = resp.BaseSpeed;
-        enableTrigger = false;
+            triggerMessage?.Invoke();
+            // resp.Speed = resp.BaseSpeed;
+            enableTrigger = false;
+        }
     }
 }

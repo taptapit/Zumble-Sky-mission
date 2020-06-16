@@ -8,6 +8,7 @@ public class MapInfo : MonoBehaviour
     public List<SphereRespawn> sphereRespawnsList; 
     public List<DestroyerMain> destroyerMainsList;
     public GameObject player;                           //об'єкт гравця
+    public Transform pointToRespawnPlayersBall;                  //точка з об'єкта гравця, в якій створювати кулі
 
     private int countDestroyBalls;           //кількість знищених куль
 

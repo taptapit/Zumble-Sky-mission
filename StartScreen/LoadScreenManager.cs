@@ -1,12 +1,9 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.Advertisements;
-using UnityEngine.Events;
-using System;
-using System.IO;
+
 public class LoadScreenManager : MonoBehaviour
 {
     public Sprite[] advSprites;

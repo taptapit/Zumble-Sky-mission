@@ -27,11 +27,23 @@ public class BallBeaver : SphereBehaviour
     {
         if (collBall.gameObject.tag != "ball" && collBall.gameObject.tag != "newBall")      //перервати, якщо колізія не з кулею
             return;
+
+        SphereBehaviour collBallBehaviour = collBall.gameObject.GetComponent<SphereBehaviour>();
+
+        if (collBallBehaviour.FrontBall==null)
+        {
+            BallController.RedyToRunNewPlayerBall = true;
+            if (BallController.blockPlayer)
+                BallController.blockPlayer = false;
+
+        }
         
+
         if (countToDestroy<1)
         {
             scoreMessage?.Invoke(score);
-            BallController.redyToRunNewPlayerBall = true;
+            BallController.RedyToRunNewPlayerBall = true;
+           // BallController.blockPlayer = false;
             //BallController.BallsLists[5].Add(gameObject);
             Destroy(gameObject);
             return;
@@ -39,14 +51,13 @@ public class BallBeaver : SphereBehaviour
 
         if (isFirstColl)
         {
-            SphereBehaviour collBallBehaviour = collBall.gameObject.GetComponent<SphereBehaviour>();
-
             pathPoints = collBallBehaviour.pathPoints;
             destPointIndex = collBallBehaviour.destPointIndex;
             Speed = 20.0f;
             Move(pathPoints, 1);
             isFirstColl = false;
-            Debug.Log("isFirstColl");
+            gameObject.GetComponent<AudioSource>()?.Play();
+            //Debug.Log("isFirstColl");
         }
 
         Debug.Log("countToDestroy="+ countToDestroy);
@@ -61,7 +72,10 @@ public class BallBeaver : SphereBehaviour
         if (pathPoints.Count > 1)
             if (destPointIndex >= pathPoints.Count - 1)
             {
-                BallController.redyToRunNewPlayerBall = true;
+                BallController.RedyToRunNewPlayerBall = true;
+                if (BallController.blockPlayer)
+                    BallController.blockPlayer = false;
+
                 Destroy(gameObject);
             }
 

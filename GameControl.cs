@@ -22,10 +22,18 @@ public class GameControl : MonoBehaviour
     public Transform beaverBallTransform;
 
     private GameObject newSphere;
+    private GameObject launchSphere;
     public Transform moveTo;                 //змінити (костиль в якості пустого об'єкта до якого рухатись. ставиться в редакторі)
                                              // SphereRespawn[] respawns;
     SaveInfo save;
     SaveLoadGame saveLoadManager;
+
+    //Ефекти
+    public GameObject explode;
+    public AudioSource destroyBallSound;
+    public AudioSource launchBallSound;
+    public AudioSource salutSound;
+    public GameObject winSalut;
 
     public Text textCountExplosive;     //текстові поля куль, встановлюються в редакторі
     public Text textCountMulticolor;
@@ -57,7 +65,7 @@ public class GameControl : MonoBehaviour
     {
         get 
         {
-            return speed + (float)save.skill[(int)PlayerSkill.SK_BONUS_SPEED] * 2.0f; 
+            return speed + (float)save.skill[(int)PlayerSkill.SK_BONUS_SPEED] * 1.1f; 
         }
         set 
         {
@@ -69,13 +77,14 @@ public class GameControl : MonoBehaviour
 
     void Awake()
     {
-       // BallController.redyToRunNewPlayerBall=true;     //костиль, виклик конструктора
+        // BallController.RedyToRunNewPlayerBall=true;     //костиль, виклик конструктора
         ballCreator = new BallCreator();         
     }
 
     void Start()
     {
-        BallController.redyToRunNewPlayerBall = false;
+       // Debug.Log("-=3=-");
+      //  BallController.RedyToRunNewPlayerBall = false;
 
         if (explosiveBallTransform==null)
         {
@@ -94,7 +103,7 @@ public class GameControl : MonoBehaviour
         LevelPreference(save.curLvl);
 
         TypesSphere typeSphere = ballCreator.randomType(true, CountColor);    
-        newSphere = ballCreator.getBall(ballTransform, transform.position, typeSphere).gameObject;
+        newSphere = ballCreator.getBall(ballTransform, map.pointToRespawnPlayersBall.position, typeSphere).gameObject;
        // newSphere.GetComponent<BallBehaviour>().TypeSphere = typeSphere;
         //  destroyLists = BallController.BallsLists;
     }
@@ -105,11 +114,14 @@ public class GameControl : MonoBehaviour
     // 6-тий список (індекс 5) - для безумовного знищення куль.
     void Update()
     {
-      /*  if (map.CountDestroyBalls>4)
-            GameOverProcess();*/
+        if (map.CountDestroyBalls>4)
+              GameOverProcess();
 
-        if (score > scoreToFinal)
+        if (score >= scoreToFinal)
+        {
+            scoreToFinal += 1000;
             GameWinProcess();
+        }
         
         TextUpdate();
 
@@ -185,7 +197,14 @@ public class GameControl : MonoBehaviour
             }
             BallController.BallsLists[i].Clear();
         }
-        BallController.redyToRunNewPlayerBall = true;
+
+        if (launchSphere == null)
+        {
+            BallController.RedyToRunNewPlayerBall = true;
+        }
+        else if(launchSphere.tag!="player")
+            BallController.RedyToRunNewPlayerBall = true;
+
         //  SafeBallDestroy();
     }
 
@@ -212,15 +231,35 @@ public class GameControl : MonoBehaviour
                     break;
             }
         }
+
+        //Звук
+        if (destroyBallSound != null)
+            destroyBallSound.Play();
+
+        //Анімація
+        if (explode != null)
+        {
+            Vector3 particlePos = new Vector3(ball.transform.position.x, ball.transform.position.y, -2);
+            GameObject explodeParticleSystem = Transform.Instantiate(explode, particlePos, Quaternion.identity);
+            Destroy(explodeParticleSystem.gameObject, 0.5f);
+        }
         Destroy(ball);
     }
 
     void OnMouseDown()
     {
-        if(!BallController.redyToRunNewPlayerBall)
+        /*if (launchSphere == null)
+        {
+            BallController.RedyToRunNewPlayerBall = true;
+        }
+        else if (launchSphere.tag != "player")
+            BallController.RedyToRunNewPlayerBall = true;*/
+
+        if (!BallController.RedyToRunNewPlayerBall)
              return;
 
-        BallController.redyToRunNewPlayerBall = false;
+        //Debug.Log("-=2=-");
+        BallController.RedyToRunNewPlayerBall = false;
 
         if (moveTo==null)
         {
@@ -228,19 +267,30 @@ public class GameControl : MonoBehaviour
             return;
         }
 
-        moveTo.position = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y,10));
+//      moveToPos.position = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, Input.mousePosition.z)); 
+        moveTo.position = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0));
+        moveTo.position = new Vector3(moveTo.position.x-map.player.transform.position.x, moveTo.position.y- map.player.transform.position.y, 0);
 
-        Vector3 relativePos = moveTo.position - player.transform.position;
-        transform.rotation = Quaternion.LookRotation(player.transform.forward, relativePos);
-
+        //Debug.Log("coord X=" + moveTo.position.x);
+        //Debug.Log("coord Y=" + moveTo.position.y);
+        //Vector3 relativePos = moveTo.position - player.transform.position;
+        // transform.rotation = Quaternion.LookRotation(player.transform.forward, relativePos);
+        // player.transform.LookAt((new Vector3(moveTo.position.x, moveTo.position.y, player.transform.position.z ));
+        player.transform.rotation = Quaternion.LookRotation(transform.forward, new Vector3(moveTo.position.x, moveTo.position.y, player.transform.position.z));
+        newSphere.transform.position = map.pointToRespawnPlayersBall.position;
         //newSphere.tag = "player";
         SphereBehaviour sb  =  newSphere.GetComponent<SphereBehaviour>();
         sb.Speed = Speed;
         sb.Move(moveTo);
+        launchSphere = newSphere;
+
+        //Звук
+        if (launchBallSound!=null)
+            launchBallSound.Play();
 
         TypesSphere typeSphere = ballCreator.randomType(true, CountColor);
-        newSphere = ballCreator.getBall(ballTransform, transform.position, typeSphere).gameObject;
-        sb = newSphere.GetComponent<SphereBehaviour>();
+            newSphere = ballCreator.getBall(ballTransform, map.pointToRespawnPlayersBall.position, typeSphere).gameObject;
+            sb = newSphere.GetComponent<SphereBehaviour>();
         //sb.TypeSphere = typeSphere;
         //Debug.Log(sb.TypeSphere);
         // newSphere = null;                   //прибрати
@@ -257,10 +307,24 @@ public class GameControl : MonoBehaviour
         }
     }*/
 
+    //private Vector3 BallPosicion() => new Vector3(player.transform.position.x-0.2f, player.transform.position.y+3.1f, -2.0f);
+
     //повертає мапу, відповідно до рівня
     private GameObject createMapGameobject(int curMapLvl)
     {
-        int randomMapIndex = Random.Range(0, mapsList.Count - 1);
+        int count = mapsList.Count;
+
+        Debug.Log("curMapLvl=" + curMapLvl);
+        Debug.Log("mapsList.Count=" + mapsList.Count);
+        if (curMapLvl < 10)
+            count = mapsList.Count > 7 ? 7 : mapsList.Count;
+
+        Debug.Log("count=" + count);
+
+        int randomMapIndex = Random.Range(0, count);
+
+        Debug.Log("randomMapIndex=" + randomMapIndex);
+        //randomMapIndex = 0;
         return GameObject.Instantiate(mapsList[randomMapIndex]);
     }
 
@@ -278,9 +342,7 @@ public class GameControl : MonoBehaviour
 
     private void LevelPreference(int curLvl)
     {
-        if (curLvl < 11)
-            CountColor = 3;
-        else if (curLvl < 21)
+        if (curLvl < 15)
             CountColor = 4;
         else
             countColor = 5;
@@ -288,7 +350,7 @@ public class GameControl : MonoBehaviour
         foreach (var resp in map.sphereRespawnsList)
             resp.CountColor = CountColor;
 
-        scoreToFinal = 200 + (curLvl * curLvl);                           //бали які необхідно заробити до перемоги в рівні         
+        scoreToFinal = 100 + ((curLvl * curLvl)/3);                           //бали які необхідно заробити до перемоги в рівні         
 
         scoreProgressBar.currentValue = score;
         scoreProgressBar.fullValue = scoreToFinal;
@@ -296,7 +358,11 @@ public class GameControl : MonoBehaviour
         if (map.sphereRespawnsList != null)
             foreach (var resp in map.sphereRespawnsList)
             {
-                resp.BaseSpeed = 0.4f + (float)curLvl / 50.0f;
+                resp.BaseSpeed = 0.8f + (float)curLvl / 125.0f;
+                foreach (var triger in resp.accTrigger)
+                {
+                    triger.currentMapLvl = curLvl;
+                }
             }
     }
 
@@ -315,13 +381,46 @@ public class GameControl : MonoBehaviour
     private void GameWinProcess()
     {
         if ((float)save.skill[(int)PlayerSkill.SK_BONUS_EXP] > 0)
-            score = (score*110)/100;
+            score = (score * 110) / 100;
 
-        save.playerExp += (score * 3);
+        save.playerExp += (score * 8);
 
         save.maxOpenLvl++;
         SaveLoadGame.SaveGame(save);
-        SceneManager.LoadScene(0);
+        StartCoroutine(GameWinProcessCoroutine());
+
+        //Debug.Log("-=1=-");
+        BallController.RedyToRunNewPlayerBall = false;
+
+        if (winSalut != null)
+            winSalut.SetActive(true);
+
+        //Звук
+        if (salutSound != null)
+            salutSound.Play();
+
+        if (map.sphereRespawnsList != null)
+            foreach (var resp in map.sphereRespawnsList)
+                resp.Speed = 0;
+
+        //Очистка 5-го списка. Знищення наявних на екрані куль
+        if (BallController.BallsLists[4] != null)
+        {
+            for (int i = 0; i < BallController.BallsLists[4].Count; i++)
+            {
+                if (BallController.BallsLists[4][i] != null)
+                    DestroyProcess(BallController.BallsLists[4][i]);
+            }
+        }
+    }
+
+    public IEnumerator GameWinProcessCoroutine()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(7.0f);
+            SceneManager.LoadScene(0);
+        }
     }
 
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -343,7 +442,7 @@ public class GameControl : MonoBehaviour
 
         Destroy(newSphere);
         TypesSphere typeSphere = TypesSphere.BEAVER;
-        newSphere = ballCreator.getBall(beaverBallTransform, transform.position, typeSphere).gameObject;
+        newSphere = ballCreator.getBall(beaverBallTransform, map.pointToRespawnPlayersBall.position, typeSphere).gameObject;
 
         BallBeaver advencedBall = newSphere.GetComponent<BallBeaver>();
         advencedBall.PowerBeaverSkill = save.skill[(int)PlayerSkill.SK_BEAVER_POWER];
@@ -359,9 +458,9 @@ public class GameControl : MonoBehaviour
 
         Destroy(newSphere);
         TypesSphere typeSphere = TypesSphere.MULCOLOR;
-        newSphere = ballCreator.getBall(multicolorBallTransform, transform.position, typeSphere).gameObject;
+        newSphere = ballCreator.getBall(multicolorBallTransform, map.pointToRespawnPlayersBall.position, typeSphere).gameObject;
         BallMulticolor advencedBall = newSphere.GetComponent<BallMulticolor>();
-        advencedBall.powerMulticolorSkill = save.skill[(int)PlayerSkill.SK_BONUS_MAX_MULTICOLOR];
+        advencedBall.powerMulticolorSkill = save.skill[(int)PlayerSkill.SK_MULTICOLOR_POWER];
 
         Debug.Log("newSphere type="+ newSphere.GetComponent<BallBehaviour>().TypeSphere);
         save.curCountMulticolor--;
@@ -372,8 +471,12 @@ public class GameControl : MonoBehaviour
             return;
 
         foreach (var resp in map.sphereRespawnsList)
-            resp.StartCoroutine(resp.TimestopBallsCoroutine(save.skill[(int)PlayerSkill.SK_BONUS_MAX_TIMESTOP]));
-
+        {
+            if (resp.Speed <= resp.BaseSpeed)
+                resp.StartCoroutine(resp.TimestopBallsCoroutine(save.skill[(int)PlayerSkill.SK_BONUS_MAX_TIMESTOP]));
+            else
+                return;
+        }
         save.curCountTimestop--;
     }
 
@@ -384,7 +487,7 @@ public class GameControl : MonoBehaviour
 
         Destroy(newSphere);
         TypesSphere typeSphere = TypesSphere.EXPLOSIVE;
-        newSphere = ballCreator.getBall(explosiveBallTransform, transform.position, typeSphere).gameObject;
+        newSphere = ballCreator.getBall(explosiveBallTransform, map.pointToRespawnPlayersBall.position, typeSphere).gameObject;
 
         BallExplosive advencedBall = newSphere.GetComponent<BallExplosive>();
         advencedBall.rangExplosiveSkill = save.skill[(int)PlayerSkill.SK_BONUS_EXP];

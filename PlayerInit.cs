@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
+﻿
 public class PlayerInit : SaveInfo
 {
     public PlayerInit()
@@ -14,12 +11,12 @@ public class PlayerInit : SaveInfo
         curCountMulticolor = 1;
         curCountBeaver = 1;
         curCountExplosive = 1;
-        curCountTimestop = 100;
+        curCountTimestop = 1;
 
-        skillPoint = 15;
-       // playerExp = 160000;
+        skillPoint = 1;
+        playerExp = 0;
 
-       // maxOpenLvl = 46;
+       // maxOpenLvl = 80;
     }
 }
 

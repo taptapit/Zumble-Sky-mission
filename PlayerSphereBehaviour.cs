@@ -8,12 +8,14 @@ public class PlayerSphereBehaviour : BallBehaviour
     public bool isCollidet = false;                      //зіткнення вже відбулося (костиль від повторного зіткнення з іншою кулею)
     internal bool isRotableBall = true;                  //чи ще крутиться куля навколо іншої
     private bool isClockwise = false;                    //в яку сторону обертається куля при ударі(залежить від кута удару)
+    private bool isTryClockwise = false;    //для напрямку обертання (виправити після додавання нормальної фізики)
+
     public bool isRealDistanceMeasurement;               //вимірювання дистанції для розрахунку точки руху. false: рахувати куля - точка, true: рахувати повний шлях по сумі елементів шляху 
 
     private BallBehaviour collBallSb;                   //Куля, в яку вдарилась куля гравця
 
     private float angle;                                //Кут удару
-    private float angleSpeed => (Speed / 3) * Time.deltaTime;   //Кутова швидкість обертання кулі після удару
+    private float angleSpeed => (Speed / 2) * Time.deltaTime;   //Кутова швидкість обертання кулі після удару
 
     private const float TPi = Mathf.PI * 2;
 
@@ -35,6 +37,9 @@ public class PlayerSphereBehaviour : BallBehaviour
             gameObject.tag = "ball";                        //Помітити як звичайну кулю
 
             GetPrefFromBackBall();
+
+            BallController.BallsLists[4].Add(gameObject);
+            //BallController.redyToRunNewPlayerBall = true;
 
             if (!isClockwise)
                 angle = PointToPointAngle(BackBall.transform.position, pathPoints[destPointIndex].position);
@@ -59,6 +64,8 @@ public class PlayerSphereBehaviour : BallBehaviour
         }
 
         angle += isClockwise ? -angleSpeed : angleSpeed;                  // зміна значення кута
+       // angle += isTryClockwise ? -angleSpeed : angleSpeed;
+        //Debug.Log(PathAngle(collBallSb.gameObject));
     }
 
     private Vector3 MuvingOnCircle(float angle, float radius, bool isClockwise, bool isSpeedCorection)      //Отримання координат для руху по колу
@@ -87,6 +94,10 @@ public class PlayerSphereBehaviour : BallBehaviour
 
         GameObject collidetBall = collBall;
         collBallSb = collidetBall.GetComponent<BallBehaviour>();
+
+       
+       // isTryClockwise = PathAngle(collBall) < 90? true: false;
+       // Debug.Log(PathAngle(collBall));
 
         //Три основні варіанти зіткнення - з заходом в перед кулі, в зад кулі та в перед кулі але з перенаправленням на задню кулю (для обрахунку більшості ударів одноманітним чином - з закотом проти часової стрілки)
         if (PathAngle(collBall) >= 90)                          //1. Удар в передню частину кулі
@@ -120,9 +131,12 @@ public class PlayerSphereBehaviour : BallBehaviour
             collBallSb = BackBall.GetComponent<BallBehaviour>();
 
             collBallSb.FrontBall = gameObject;
+
+            isTryClockwise = PathAngle(collBallSb.BackBall) < 90 ? true : false;
         }
         else                                                    //3. Дійсний удар в задню частину кулі, якщо інших варіантів не лишилось(удар в хвіст потоку, або по одиночній кулі)
         {
+           // isTryClockwise = true;
             isClockwise = true;
             //Debug.Log("REAL BACK");
             FrontBall = collBall;
@@ -231,6 +245,6 @@ public class PlayerSphereBehaviour : BallBehaviour
 
     void OnDestroy()
     {
-        BallController.redyToRunNewPlayerBall = true;
+        BallController.RedyToRunNewPlayerBall = true;
     }
 }

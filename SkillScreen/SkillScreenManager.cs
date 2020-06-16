@@ -39,7 +39,7 @@ public class SkillScreenManager : MonoBehaviour
             Debug.Log("Adv not supported");
         }
 
-        if (Advertisement.IsReady() && save.playerLvl>2 && Random.Range(0,1.0f) > (save.playerLvl>6?0.8f:0.9f))
+        if (Advertisement.IsReady() && save.playerLvl>1 && Random.Range(0,1.0f) > (save.playerLvl>4?0.75f:0.9f))
             Advertisement.Show();
 
             //Debug.Log(save.skill[(int)PlayerSkill.SK_BONUS_SPEED]);
@@ -78,6 +78,7 @@ public class SkillScreenManager : MonoBehaviour
 
     public void button_exit()
     {
+        StopAllCoroutines();
         SaveLoadGame.SaveGame(save);
         Advertisement.Banner.Hide();
         SceneManager.LoadScene(0);

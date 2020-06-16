@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class SphereBehaviour : MonoBehaviour, IMovingObject
@@ -21,7 +20,7 @@ public class SphereBehaviour : MonoBehaviour, IMovingObject
 
     private int step;                                                //крок точки маршруту
     public bool isRevers;                                           //зворотній рух
-    private bool oldReversValue = false;                              //Використовується для миттєвої зміни напрямку при реверсі. Зберігає старе значення isRevers
+   // private bool oldReversValue = false;                              //Використовується для миттєвої зміни напрямку при реверсі. Зберігає старе значення isRevers
 
     internal float distanceTreshold = 0.6f;                         //допуск, при якому сфера переключиться на рух до наступної точки.
 
@@ -117,7 +116,7 @@ public class SphereBehaviour : MonoBehaviour, IMovingObject
         Step = 1;
     }
 
-    void Update()
+    void FixedUpdate()
     {
         //ДЕБАГ
         if (BackBall != null)
@@ -154,7 +153,14 @@ public class SphereBehaviour : MonoBehaviour, IMovingObject
         }
         else
         {
-            transform.Translate(((destVector).normalized) * Speed * Time.deltaTime);  //рух в напрямку
+            //Vector3 translatePosition = Vector3.MoveTowards(transform.position, destVector, 10);
+
+            //transform.position = Vector3.MoveTowards(transform.position, destVector, Speed * Time.deltaTime);
+            // Vector3 translatePosition = Vector3.MoveTowards(transform.position, destVector, 1);
+            transform.Translate((destVector).normalized* Time.deltaTime * Speed, Space.World);
+            //transform.Translate((new Vector3(1,1,0)) * Speed * Time.deltaTime, Space.World);  //рух в напрямку
+            //Debug.Log("2_coord X=" + destVector.y);
+            //Debug.Log("2_coord Y=" + -destVector.x);
         }
     }
 
@@ -207,7 +213,13 @@ public class SphereBehaviour : MonoBehaviour, IMovingObject
         return Vector3.Distance(pathPoints[destPointIndex -1].position, pathPoints[destPointIndex].position) > distance();
     }
 
-    private float distance() => Vector3.Distance(pathPoints[destPointIndex].position, transform.position);
+    private float distance()
+    {
+        if (destPointIndex<0 || destPointIndex> pathPoints.Count-1)
+             return 0;
+
+        return Vector3.Distance(pathPoints[destPointIndex].position, transform.position);
+    }
     
     public void Move(Transform direction)                   //наказ рухатись по напрямку 
     {

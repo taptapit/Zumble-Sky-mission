@@ -11,7 +11,7 @@ public class BallBehaviour : SphereBehaviour
     public short Health;                     //чи має куля запас хітпойнтів. За замовчуванням не має, знищується при першій підтвердженій умові  
     public float BaseSpeed { get; set; }                 //базова швидкість, для відновлення руху з базовою швидкістю в разі потреби
 
-    private bool isLastBallInResp = false;       //остання куля з даного респауна
+    //private bool isLastBallInResp = false;       //остання куля з даного респауна
 
     //Змінні кулі, при знищенні якої отримується бонусна куля
     public Sprite[] getAdvencedBallSprites;               //Спрайти відображення бонусної кулі на поточній кулі. Встановити в редакторі
@@ -19,6 +19,9 @@ public class BallBehaviour : SphereBehaviour
     [SerializeField]
     public float ChanceToGetAdvencedBall { get; set; }     //Шанс на появу бонусної кулі. Публічний, для майбутнього корегування з керуючих об'єктів
     public int AdvencedBallIndex { get; set; }           //Індекс поточної бонусної кулі. Обробляється геймконтролом при знищенні кулі. За замовчуванням встановити в -1.
+
+    /*//Ефекти
+    public Transform explode;*/
 
     [SerializeField]
     public bool IsLastBallInResp
@@ -47,7 +50,7 @@ public class BallBehaviour : SphereBehaviour
 
         AdvencedBallIndex = -1;
         if (ChanceToGetAdvencedBall == 0)
-            ChanceToGetAdvencedBall = 0.04f;
+            ChanceToGetAdvencedBall = 0.03f;
 
         //Ввімкнути відображення бонусної кулі, якщо випав відповідний ролл на шанс
         if (gameObject.tag== "newBall" && Random.Range(0.0f, 1.00f) < ChanceToGetAdvencedBall
@@ -73,9 +76,10 @@ public class BallBehaviour : SphereBehaviour
                 if (value)                          //Якщо остання куля в послідовності  - рекурсивно зупинити передні кулі
                 {
                    // Debug.Log("IsLocalLastBall= " + IsLocalLastBall);
-                    BallController.redyToRunNewPlayerBall = false;
+                    BallController.blockPlayer = true;
+                    Debug.Log("-=1=-");
                     StopAllCoroutines();
-                    MoveForwardBall(10.0f, -1, true);
+                    MoveForwardBall(15.0f, -1, true);
                 }
                 else                                //Якщо більше не остання куля - рекурсивно почати рух передніх куль
                 {
@@ -83,7 +87,7 @@ public class BallBehaviour : SphereBehaviour
                     MoveForwardBall(BaseSpeed, 1, false);
                     StartCoroutine(AlignBallsCoroutine());
                     PlayerCheckToDestroy();
-                    BallController.redyToRunNewPlayerBall = true;
+                    BallController.blockPlayer = false;
                 }
             }
             isLocalLastBall = value;
@@ -229,7 +233,7 @@ public class BallBehaviour : SphereBehaviour
     public void MoveOneStepForward(PlayerSphereBehaviour atackBall) //Coroutine запускається з метода, що б не створювати булеву змінну для виконання початкового коду тільки один раз
     {
       //  Speed = 5.0f;
-        MoveForwardBall(Speed>4.0?8.0f:4.0f, 1, false);
+        MoveForwardBall(Speed>4.0?10.0f:6.0f, 1, false);
         StartCoroutine(MoveOneStepForwardCoroutine(atackBall));
     }
     public IEnumerator MoveOneStepForwardCoroutine(PlayerSphereBehaviour atackBall)
@@ -433,5 +437,16 @@ public class BallBehaviour : SphereBehaviour
         }
         else
             destroyList.Clear();
+
+        //BallController.blockPlayer = false;
     }
+
+   /* private void OnDestroy()
+    {
+        if (explode != null)
+        {
+            Transform explodeParticleSystem = Transform.Instantiate(explode, transform);
+            Destroy(explodeParticleSystem.gameObject, 0.3f);
+        }
+    }*/
 }

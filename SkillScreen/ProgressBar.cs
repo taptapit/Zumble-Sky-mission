@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class ProgressBar : MonoBehaviour
 {
@@ -34,6 +32,9 @@ public class ProgressBar : MonoBehaviour
 
     public void UpdateProgressBar()
     {
+        if (currentValue> fullValue)
+            currentValue = fullValue;
+
         transform.localScale = new Vector3(currentValue / fullValue, 1, 1);
         float offsetX = (lengthX - barrSpriteRender.bounds.size.x) / 2;
         transform.position = new Vector3(startX - offsetX, transform.position.y, transform.position.z);

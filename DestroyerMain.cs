@@ -1,11 +1,9 @@
 ﻿using UnityEngine;
-using System.Collections;
-//using ZLibrary;
 
 public class DestroyerMain : MonoBehaviour
 {
     public int countDestroyBalls;             //кількість знищених куль
-    public float lifetime = 0.3f;
+   // public float lifetime = 0.3f;
     void OnTriggerEnter2D(Collider2D collBall)
     {
         DestroyProcess(collBall.gameObject);

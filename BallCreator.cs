@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 //ПОВЕДІНКА ОБ'ЄКТА ЩО РУХАЄТЬСЯ
@@ -106,12 +105,12 @@ public class BallCreator
                     color = new Vector4(1, 0, 1, 1);
                     break;
                 }
-            case TypesSphere.EXPLOSIVE:
+           /* case TypesSphere.EXPLOSIVE:
                 {
                     Debug.Log("TypesSphere.EXPLOSIVE");
                     color = Color.black;
                     break;
-                }
+                }*/
             case TypesSphere.BEAVER:
                 {
                     color = Color.gray;
@@ -137,7 +136,27 @@ static public class BallController
     static private List<GameObject>[] ballsLists = new List<GameObject>[10];      //масив з списками потоків куль всіх створених респавнів(до десяти)
     static public int lastForwardBallIndex;
     static public bool readyToDestroy;           //використовується для визначення моменту, в який можна звертатись до списку, для недопущення знищення куль, до яких ще буде потрібен доступ
-    static public bool redyToRunNewPlayerBall = true;   //використовується для визначення, чи можна запускати нову кулю.
+
+    //блокування запуску кулі гравцем
+    static public bool blockPlayer= false;                 
+    static private bool redyToRunNewPlayerBall = true;
+
+    static public bool RedyToRunNewPlayerBall
+    {
+        get
+        {
+            Debug.Log("redyToRunNewPlayerBall="+ redyToRunNewPlayerBall);
+            Debug.Log("blockPlayer=" + blockPlayer);
+            return redyToRunNewPlayerBall && !blockPlayer;
+        }
+        set
+        {
+            redyToRunNewPlayerBall = value;
+        }
+    }
+        //використовується для визначення, чи можна запускати нову кулю.
+
+
     static BallController()
     {
         for (int i = 0; i < ballsLists.Length; i++)

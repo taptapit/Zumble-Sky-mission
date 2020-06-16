@@ -13,6 +13,8 @@ public class BallMulticolor : PlayerSphereBehaviour
         List<GameObject> destroyList = new List<GameObject>();
         destroyList = BallController.GetBalls(RespIndex);
 
+        //Debug.Log("powerMulticolorSkill="+powerMulticolorSkill);
+
         if (powerMulticolorSkill < 1)
             destroyList.Add(gameObject);
         else
